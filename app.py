@@ -3,10 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime  # <-- Tambahkan import ini di bagian paling atas file app.py
-from flask import Flask, render_template, redirect, url_for, request, flash
-from flask_login import login_required, current_user
-# ... import lainnya (db, User, Review, dll) ...
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
@@ -47,7 +44,6 @@ class Review(db.Model):
     trans_palembang = db.Column(db.Text)
     trans_mix_palembang = db.Column(db.Text)
     
-    # Tambahkan relasi ini supaya bisa dipanggil dengan review.annotations
     annotations = db.relationship('Annotation', backref='review', lazy=True)
 
 class Annotation(db.Model):
@@ -62,9 +58,10 @@ class Annotation(db.Model):
     rev_mix = db.Column(db.Text)
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Dengan adanya backref='review' atau relationship di atas, 
-    # perintah anno.review.content sekarang akan otomatis terhubung ke tabel Review!
+
+# --- OTOMATIS BUAT TABEL DI SUPABASE SAAT STARTUP ---
+with app.app_context():
+    db.create_all()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -103,7 +100,6 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
-    # Ambil semua data anotasi yang pernah dikerjakan oleh user ini
     annotations = Annotation.query.filter_by(user_id=current_user.id).all()
     return render_template('history.html', annotations=annotations)
 
@@ -111,7 +107,6 @@ def history():
 @login_required
 def edit_annotation(annotation_id):
     anno = Annotation.query.get_or_404(annotation_id)
-    # Pastikan hanya user bersangkutan yang bisa edit
     if anno.user_id != current_user.id:
         return redirect(url_for('history'))
         
@@ -119,7 +114,7 @@ def edit_annotation(annotation_id):
     
     if request.method == 'POST':
         anno.status_full = request.form.get('option_full')
-        anno.rev_full = request.form.get('rev_full') if anno.status_full == 'revise' else review.trans_jawa # atau palembang
+        anno.rev_full = request.form.get('rev_full') if anno.status_full == 'revise' else review.trans_jawa
         
         anno.status_mix = request.form.get('option_mix')
         anno.rev_mix = request.form.get('rev_mix') if anno.status_mix == 'revise' else review.trans_mix_jawa
@@ -129,24 +124,20 @@ def edit_annotation(annotation_id):
         
     return render_template('edit_annotate.html', anno=anno, review=review)
 
-# Halaman utama anotasi (otomatis mengambil data berikutnya yang belum dikerjakan)
 @app.route('/annotate')
 @login_required
 def annotate():
-    # Ambil ID yang sudah dikerjakan oleh user ini
     done_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id).all()
     done_ids = [r[0] for r in done_ids]
     
-    # Ambil satu data yang belum dikerjakan
     item = Review.query.filter(~Review.id.in_(done_ids)).first()
     
     if not item:
         return render_template('finish.html')
-    
-    user_role = current_user.role # 'jawa' atau 'palembang'
+        
+    user_role = current_user.role
     return render_template('annotate.html', item=item, role=user_role)
 
-# (Opsional) Jika ingin membuka review spesifik berdasarkan ID
 @app.route('/annotate/<int:review_id>')
 @login_required
 def annotate_by_id(review_id):
@@ -160,8 +151,10 @@ def submit(review_id):
     new_anno = Annotation(
         review_id=review_id,
         user_id=current_user.id,
-        rev_full=request.form.get('rev_full'),
-        rev_mix=request.form.get('rev_mix')
+        status_full=request.form.get('option_full'),
+        rev_full=request.form.get('rev_full') if request.form.get('option_full') == 'revise' else None,
+        status_mix=request.form.get('option_mix'),
+        rev_mix=request.form.get('rev_mix') if request.form.get('option_mix') == 'revise' else None
     )
     db.session.add(new_anno)
     db.session.commit()
