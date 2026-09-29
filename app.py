@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kai_annotation.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/dbname')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
