@@ -3,4 +3,5 @@ Flask-Login
 Flask-SQLAlchemy
 Werkzeug
 pandas
+psycopg
 psycopg2-binary
