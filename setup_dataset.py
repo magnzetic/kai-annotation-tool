@@ -32,7 +32,8 @@ def setup():
 
         # 2. Tambah Data Review dari CSV
         if Review.query.count() == 0:
-            csv_path = os.getenv('CSV_FILE_PATH', 'dataset_website.csv')
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            csv_path = os.path.join(base_dir, os.getenv('CSV_FILE_PATH', 'dataset_website.csv'))
             
             if os.path.exists(csv_path):
                 df = pd.read_csv(csv_path).fillna('')
