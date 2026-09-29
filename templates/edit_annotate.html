@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAI Workspace - Edit Anotasi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container d-flex justify-content-between">
+            <span class="navbar-brand mb-0 h1">Edit Anotasi: <span class="text-warning">{{ current_user.username }}</span></span>
+            <a href="{{ url_for('history') }}" class="btn btn-outline-light btn-sm">← Kembali ke Riwayat</a>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-muted fw-bold small">Review Asli (Indonesia)</h6>
+                        <div class="alert alert-secondary fs-5 fst-italic mb-3">
+                            "{{ review.content }}"
+                        </div>
+
+                        <h6 class="text-uppercase text-muted fw-bold small">Aspek & Sentimen ABSA</h6>
+                        <div>
+                            {% if review.performa %}<span class="badge bg-primary me-1">Performa: {{ review.performa }}</span>{% endif %}
+                            {% if review.tampilan %}<span class="badge bg-success me-1">Tampilan: {{ review.tampilan }}</span>{% endif %}
+                            {% if review.tiket %}<span class="badge bg-info text-dark me-1">Tiket: {{ review.tiket }}</span>{% endif %}
+                            {% if review.pembayaran %}<span class="badge bg-warning text-dark me-1">Pembayaran: {{ review.pembayaran }}</span>{% endif %}
+                            {% if review.akun %}<span class="badge bg-danger me-1">Akun: {{ review.akun }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    
+                    <!-- 1. Terjemahan Full -->
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold fs-6 mb-3">1. Terjemahan Full</h5>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="option_full" id="edit_valid_full" value="valid" {% if anno.status_full == 'valid' %}checked{% endif %} onclick="toggleRevisi('full', false)">
+                                <label class="form-check-label text-success fw-bold" for="edit_valid_full">
+                                    ✓ Sudah Sesuai / Valid
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="option_full" id="edit_revise_full" value="revise" {% if anno.status_full == 'revise' %}checked{% endif %} onclick="toggleRevisi('full', true)">
+                                <label class="form-check-label text-danger fw-bold" for="edit_revise_full">
+                                    ✍️ Perlu Revisi Manual
+                                </label>
+                            </div>
+
+                            <div id="box_rev_full" style="display: {% if anno.status_full == 'revise' %}block{% else %}none{% endif %};">
+                                <textarea name="rev_full" class="form-control" rows="3" placeholder="Tulis perbaikan terjemahan full...">{{ anno.rev_full if anno.rev_full else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Terjemahan Code-Mixed -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold fs-6 mb-3">2. Terjemahan Code-Mixed</h5>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="option_mix" id="edit_valid_mix" value="valid" {% if anno.status_mix == 'valid' %}checked{% endif %} onclick="toggleRevisi('mix', false)">
+                                <label class="form-check-label text-success fw-bold" for="edit_valid_mix">
+                                    ✓ Sudah Sesuai / Valid
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="option_mix" id="edit_revise_mix" value="revise" {% if anno.status_mix == 'revise' %}checked{% endif %} onclick="toggleRevisi('mix', true)">
+                                <label class="form-check-label text-danger fw-bold" for="edit_revise_mix">
+                                    ✍️ Perlu Revisi Manual
+                                </label>
+                            </div>
+
+                            <div id="box_rev_mix" style="display: {% if anno.status_mix == 'revise' %}block{% else %}none{% endif %};">
+                                <textarea name="rev_mix" class="form-control" rows="3" placeholder="Tulis perbaikan code-mixed...">{{ anno.rev_mix if anno.rev_mix else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">SIMPAN PERUBAHAN</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleRevisi(type, show) {
+            const box = document.getElementById('box_rev_' + type);
+            if (show) {
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

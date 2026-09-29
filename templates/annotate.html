@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAI Workspace - Anotasi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container d-flex justify-content-between">
+            <span class="navbar-brand mb-0 h1">Annotator: <span class="text-warning">{{ current_user.username }}</span> (Role: {{ current_user.role|capitalize }})</span>
+            <div>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-light btn-sm me-2">📋 Riwayat & Edit Anotasi</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="{{ url_for('dashboard') }}" class="text-decoration-none text-muted">← Kembali ke Dashboard</a>
+                    <span class="badge bg-secondary">Review ID: #{{ item.id }}</span>
+                </div>
+
+                <!-- Review Asli & ABSA -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-muted fw-bold small">Review Asli (Indonesia)</h6>
+                        <div class="alert alert-secondary fs-5 fst-italic mb-3">
+                            "{{ item.content }}"
+                        </div>
+
+                        <h6 class="text-uppercase text-muted fw-bold small">Aspek & Sentimen ABSA</h6>
+                        <div>
+                            {% if item.performa %}<span class="badge bg-primary me-1">Performa: {{ item.performa }}</span>{% endif %}
+                            {% if item.tampilan %}<span class="badge bg-success me-1">Tampilan: {{ item.tampilan }}</span>{% endif %}
+                            {% if item.tiket %}<span class="badge bg-info text-dark me-1">Tiket: {{ item.tiket }}</span>{% endif %}
+                            {% if item.pembayaran %}<span class="badge bg-warning text-dark me-1">Pembayaran: {{ item.pembayaran }}</span>{% endif %}
+                            {% if item.akun %}<span class="badge bg-danger me-1">Akun: {{ item.akun }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Validasi & Revisi -->
+                <form action="{{ url_for('submit', review_id=item.id) }}" method="POST">
+                    
+                    <!-- 1. Terjemahan Full -->
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold fs-6 mb-3">1. Terjemahan Full ({{ role|capitalize }})</h5>
+                            
+                            <div class="p-3 bg-light border rounded mb-3">
+                                <span class="text-muted small d-block mb-1">Hasil Generate LLM:</span>
+                                <p class="mb-0 fw-semibold text-dark" id="llm_full_text">
+                                    {% if role == 'jawa' %}{{ item.trans_jawa }}{% else %}{{ item.trans_palembang }}{% endif %}
+                                </p>
+                            </div>
+
+                            <!-- Opsi Pilihan User -->
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="option_full" id="valid_full" value="valid" checked onclick="toggleRevisi('full', false)">
+                                <label class="form-check-label text-success fw-bold" for="valid_full">
+                                    ✓ Sudah Sesuai / Valid (Tidak perlu revisi)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="option_full" id="revise_full" value="revise" onclick="toggleRevisi('full', true)">
+                                <label class="form-check-label text-danger fw-bold" for="revise_full">
+                                    ✍️ Perlu Revisi Manual (Ketik perbaikan)
+                                </label>
+                            </div>
+
+                            <!-- Kolom Textarea (Hidden by default) -->
+                            <div id="box_rev_full" style="display: none;">
+                                <textarea name="rev_full" class="form-control" rows="3" placeholder="Tulis perbaikan terjemahan di sini..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Terjemahan Code-Mixed -->
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold fs-6 mb-3">2. Terjemahan Code-Mixed (Indo - {{ role|capitalize }})</h5>
+                            
+                            <div class="p-3 bg-light border rounded mb-3">
+                                <span class="text-muted small d-block mb-1">Hasil Generate LLM:</span>
+                                <p class="mb-0 fw-semibold text-dark">
+                                    {% if role == 'jawa' %}{{ item.trans_mix_jawa }}{% else %}{{ item.trans_mix_palembang }}{% endif %}
+                                </p>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="option_mix" id="valid_mix" value="valid" checked onclick="toggleRevisi('mix', false)">
+                                <label class="form-check-label text-success fw-bold" for="valid_mix">
+                                    ✓ Sudah Sesuai / Valid (Tidak perlu revisi)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="option_mix" id="revise_mix" value="revise" onclick="toggleRevisi('mix', true)">
+                                <label class="form-check-label text-danger fw-bold" for="revise_mix">
+                                    ✍️ Perlu Revisi Manual (Ketik perbaikan)
+                                </label>
+                            </div>
+
+                            <div id="box_rev_mix" style="display: none;">
+                                <textarea name="rev_mix" class="form-control" rows="3" placeholder="Tulis perbaikan code-mixed di sini..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark shadow-sm">SIMPAN & LANJUT DATA BERIKUTNYA →</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JavaScript untuk memunculkan Textarea jika dipilih 'Revisi' -->
+    <script>
+        function toggleRevisi(type, show) {
+            const box = document.getElementById('box_rev_' + type);
+            if (show) {
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

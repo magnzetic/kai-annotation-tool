@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>KAI Translation Validator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between">
+        <h4>Validasi Terjemahan ABSA KAI</h4>
+        <span class="badge bg-dark">Progress: {{ progress }} / {{ total }}</span>
+    </div>
+
+    <form action="/submit/{{ item.id }}" method="POST">
+        <!-- SEKSI TEKS ASLI -->
+        <div class="original-box mt-3 mb-4 shadow-sm">
+            <label class="text-muted small fw-bold">KONTEN ASLI (INDONESIA)</label>
+            <p class="fs-5">{{ item.content }}</p>
+            <div>
+                {% if item.performa %}<span class="badge bg-primary aspect-badge">Performa: {{item.performa}}</span>{% endif %}
+                {% if item.tampilan %}<span class="badge bg-secondary aspect-badge">Tampilan: {{item.tampilan}}</span>{% endif %}
+                {% if item.tiket %}<span class="badge bg-success aspect-badge">Tiket: {{item.tiket}}</span>{% endif %}
+                {% if item.pembayaran %}<span class="badge bg-warning text-dark aspect-badge">Pembayaran: {{item.pembayaran}}</span>{% endif %}
+                {% if item.akun %}<span class="badge bg-info text-dark aspect-badge">Akun: {{item.akun}}</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- SEKSI BAHASA JAWA -->
+            <div class="col-md-6">
+                <div class="card translation-card p-3 border-primary">
+                    <h6 class="text-primary border-bottom pb-2">Bahasa Jawa & Mix Jawa</h6>
+                    <div class="mb-2">
+                        <small class="text-muted">LLM Translation (Full Jawa):</small>
+                        <p class="bg-light p-2 rounded small">{{ item.trans_jawa }}</p>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">LLM Translation (Code-Mixed):</small>
+                        <p class="bg-light p-2 rounded small">{{ item.trans_mix_jawa }}</p>
+                    </div>
+                    
+                    <label class="small fw-bold">Status:</label>
+                    <select name="status_jawa" class="form-select form-select-sm mb-2" required>
+                        <option value="Valid">✅ Valid (Sudah Natural)</option>
+                        <option value="Revised" selected>✍️ Perlu Revisi</option>
+                        <option value="Invalid">❌ Salah Total</option>
+                    </select>
+                    <textarea name="revisi_jawa" class="form-control form-control-sm" rows="2" placeholder="Tulis revisi Jawa terbaik di sini...">{{ item.trans_jawa }}</textarea>
+                </div>
+            </div>
+
+            <!-- SEKSI BAHASA PALEMBANG -->
+            <div class="col-md-6">
+                <div class="card translation-card p-3 border-danger">
+                    <h6 class="text-danger border-bottom pb-2">Bahasa Palembang & Mix Palembang</h6>
+                    <div class="mb-2">
+                        <small class="text-muted">LLM Translation (Full Palembang):</small>
+                        <p class="bg-light p-2 rounded small">{{ item.trans_palembang }}</p>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">LLM Translation (Code-Mixed):</small>
+                        <p class="bg-light p-2 rounded small">{{ item.trans_mix_palembang }}</p>
+                    </div>
+                    
+                    <label class="small fw-bold">Status:</label>
+                    <select name="status_palembang" class="form-select form-select-sm mb-2" required>
+                        <option value="Valid">✅ Valid (Sudah Natural)</option>
+                        <option value="Revised" selected>✍️ Perlu Revisi</option>
+                        <option value="Invalid">❌ Salah Total</option>
+                    </select>
+                    <textarea name="revisi_palembang" class="form-control form-control-sm" rows="2" placeholder="Tulis revisi Palembang terbaik di sini...">{{ item.trans_palembang }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 card p-3 shadow-sm">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="annotator" class="form-control" placeholder="Nama Annotator" required>
+                </div>
+                <div class="col-md-8 d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">SIMPAN & LANJUT KE DATA BERIKUTNYA</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+</html>

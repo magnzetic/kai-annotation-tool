@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Annotator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark px-4 py-3 mb-5">
+        <span class="navbar-brand fw-bold">KAI ANNOTATION</span>
+        <a href="/logout" class="btn btn-sm btn-outline-light">Logout</a>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h3 class="fw-bold">Selamat Datang, {{ current_user.username|capitalize }}</h3>
+                <p class="text-muted">Bahasa Target: <b>{{ current_user.role|capitalize }}</b></p>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card card-stats p-4 shadow-sm">
+                    <h6 class="text-muted">TOTAL DATA</h6>
+                    <h2 class="fw-bold">{{ total }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stats p-4 shadow-sm">
+                    <h6 class="text-muted">SELESAI</h6>
+                    <h2 class="fw-bold text-success">{{ done }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-stats p-4 shadow-sm">
+                    <h6 class="text-muted">PROGRESS</h6>
+                    <h2 class="fw-bold text-primary">{{ percent }}%</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-5 shadow-sm text-center">
+            <h4>Lanjutkan Pekerjaan?</h4>
+            <p class="text-muted mb-4">Anda akan diarahkan ke data terakhir yang belum diisi.</p>
+            <div class="progress mb-4" style="height: 10px;">
+                <div class="progress-bar bg-primary" style="width: {{ percent }}%"></div>
+            </div>
+            <a href="/annotate" class="btn btn-kai btn-lg px-5 mx-auto">MULAI ANOTASI</a>
+        </div>
+    </div>
+    {% for rev in reviews %}
+    <p>Teks Asli: {{ rev.content }}</p>
+    
+    {% if role == 'jawa' %}
+        <p>Terjemahan Jawa (Full): {{ rev.trans_jawa }}</p>
+        <p>Terjemahan Jawa (Mix): {{ rev.trans_mix_jawa }}</p>
+    {% elif role == 'palembang' %}
+        <p>Terjemahan Palembang (Full): {{ rev.trans_palembang }}</p>
+        <p>Terjemahan Palembang (Mix): {{ rev.trans_mix_palembang }}</p>
+    {% endif %}
+{% endfor %}
+</body>
+</html>
