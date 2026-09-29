@@ -183,3 +183,49 @@ def submit(review_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+import os
+import pandas as pd
+
+# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP ---
+with app.app_context():
+    db.create_all()
+    
+    # 1. Buat User otomatis jika tabel masih kosong
+    if User.query.count() == 0:
+        users_config = os.getenv('USERS_CONFIG')
+        if users_config:
+            for entry in users_config.split(','):
+                parts = entry.strip().split(':')
+                if len(parts) == 3:
+                    uname, upass, urole = parts[0], parts[1], parts[2]
+                    hashed_pw = generate_password_hash(upass)
+                    db.session.add(User(username=uname, password=hashed_pw, role=urole))
+            db.session.commit()
+            print("✅ User default berhasil dibuat!")
+
+    # 2. Import CSV otomatis dengan path absolut yang aman untuk Vercel
+    if Review.query.count() == 0:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'dataset_website.csv')
+        
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path).fillna('')
+            for _, row in df.iterrows():
+                rev = Review(
+                    content=row.get('content', ''),
+                    performa=row.get('Performa', ''),
+                    tampilan=row.get('Tampilan', ''),
+                    tiket=row.get('Tiket', ''),
+                    pembayaran=row.get('Pembayaran', ''),
+                    akun=row.get('Akun', ''),
+                    trans_jawa=row.get('trans_jawa', ''),
+                    trans_mix_jawa=row.get('trans_mix_jawa', ''),
+                    trans_palembang=row.get('trans_palembang', ''),
+                    trans_mix_palembang=row.get('trans_mix_palembang', '')
+                )
+                db.session.add(rev)
+            db.session.commit()
+            print(f"📦 Berhasil mengimport {len(df)} data review dari CSV!")
+        else:
+            print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
