@@ -1,7 +1,7 @@
 {
   "functions": {
     "app.py": {
-      "includeFiles": ["dataset_website.csv"]
+      "includeFiles": "dataset_website.csv"
     }
   }
 }
