@@ -59,13 +59,29 @@ class Annotation(db.Model):
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- OTOMATIS BUAT TABEL DI SUPABASE SAAT STARTUP ---
+# --- OTOMATIS BUAT TABEL & USER DARI ENV VARIABLES ---
 with app.app_context():
     db.create_all()
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    
+    # Jika tabel user masih kosong, buat user berdasarkan konfigurasi environment variable
+    if User.query.count() == 0:
+        # Format di Vercel: "username1:password1:role1,username2:password2:role2,..."
+        users_config = os.getenv('USERS_CONFIG')
+        
+        if users_config:
+            entries = users_config.split(',')
+            for entry in entries:
+                parts = entry.strip().split(':')
+                if len(parts) == 3:
+                    uname, upass, urole = parts[0], parts[1], parts[2]
+                    hashed_pw = generate_password_hash(upass)
+                    new_user = User(username=uname, password=hashed_pw, role=urole)
+                    db.session.add(new_user)
+            db.session.commit()
+            print("✅ 4 User berhasil di-generate dari Environment Variables!")
+        else:
+            # Cadangan darurat jika USERS_CONFIG belum diset di Vercel
+            print("⚠️ USERS_CONFIG belum diatur di Vercel Environment Variables!")
 
 # --- ROUTES ---
 @app.route('/login', methods=['GET', 'POST'])
