@@ -7,7 +7,7 @@ def import_csv():
         db.create_all()
         
         # Baca dataset
-        df = pd.read_csv('/Users/nals/Documents/magister:3/kai-annotation-tool/dataset_website.csv')
+        df = pd.read_csv('/dataset_website.csv')
         
         # Bersihkan NaN agar tidak error saat masuk DB
         df = df.fillna('')
