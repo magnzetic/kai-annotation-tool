@@ -27,7 +27,7 @@ login_manager.login_view = 'login'
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(100))
+    password = db.Column(db.String(255))  # <-- Diperbesar menjadi 255 karakter
     role = db.Column(db.String(20)) # 'jawa' or 'palembang'
 
 class Review(db.Model):
