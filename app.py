@@ -10,7 +10,12 @@ from flask_login import login_required, current_user
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/dbname')
+db_url = os.getenv('DATABASE_URL')
+
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url if db_url else 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
