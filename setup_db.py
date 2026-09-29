@@ -7,7 +7,9 @@ def import_csv():
         db.create_all()
         
         # Baca dataset
-        df = pd.read_csv('/dataset_website.csv')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'dataset_website.csv')
+        df = pd.read_csv(csv_path)
         
         # Bersihkan NaN agar tidak error saat masuk DB
         df = df.fillna('')
