@@ -55,23 +55,17 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # --- DIMENSI UNTUK FULL TEXT (Jawa / Palembang) ---
-    acc_full = db.Column(db.Integer)       # Accuracy (1-3)
-    acc_full_note = db.Column(db.Text)     # Opsional / catatan jika diperlukan
+    # Skor 3 dimensi Full
+    acc_f = db.Column(db.Integer)
+    cep_f = db.Column(db.Integer)
+    rea_f = db.Column(db.Integer)
+    rev_full = db.Column(db.Text)  # <-- Revisi teks manual Full
     
-    acc_mix = db.Column(db.Integer)        # Acceptability (1-3)
-    acc_mix_note = db.Column(db.Text)
-    
-    # Kita bisa rapikan namanya atau sesuaikan dengan 3 dimensi:
-    # 1. Accuracy, 2. Acceptability, 3. Readability untuk Full
-    acc_f = db.Column(db.Integer)  # Accuracy Full
-    cep_f = db.Column(db.Integer)  # Acceptability Full
-    rea_f = db.Column(db.Integer)  # Readability Full
-    
-    # --- DIMENSI UNTUK MIX TEXT (Indo-Jawa / Indo-Palembang) ---
-    acc_m = db.Column(db.Integer)  # Accuracy Mix
-    cep_m = db.Column(db.Integer)  # Acceptability Mix
-    rea_m = db.Column(db.Integer)  # Readability Mix
+    # Skor 3 dimensi Mix
+    acc_m = db.Column(db.Integer)
+    cep_m = db.Column(db.Integer)
+    rea_m = db.Column(db.Integer)
+    rev_mix = db.Column(db.Text)  # <-- Revisi teks manual Mix
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -186,15 +180,22 @@ def annotate_by_id(review_id):
 @app.route('/submit/<int:review_id>', methods=['POST'])
 @login_required
 def submit(review_id):
+    review = Review.query.get_or_404(review_id)
+    
     new_anno = Annotation(
         review_id=review_id,
         user_id=current_user.id,
+        # Full
         acc_f=request.form.get('acc_full', type=int),
         cep_f=request.form.get('accept_full', type=int),
         rea_f=request.form.get('read_full', type=int),
+        rev_full=request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang),
+        
+        # Mix
         acc_m=request.form.get('acc_mix', type=int),
         cep_m=request.form.get('accept_mix', type=int),
-        rea_m=request.form.get('read_mix', type=int)
+        rea_m=request.form.get('read_mix', type=int),
+        rev_mix=request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
     )
     db.session.add(new_anno)
     db.session.commit()
