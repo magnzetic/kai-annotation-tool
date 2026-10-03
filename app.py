@@ -56,11 +56,23 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    status_full = db.Column(db.String(20), default='valid') 
-    rev_full = db.Column(db.Text)
+    # --- DIMENSI UNTUK FULL TEXT (Jawa / Palembang) ---
+    acc_full = db.Column(db.Integer)       # Accuracy (1-3)
+    acc_full_note = db.Column(db.Text)     # Opsional / catatan jika diperlukan
     
-    status_mix = db.Column(db.String(20), default='valid')
-    rev_mix = db.Column(db.Text)
+    acc_mix = db.Column(db.Integer)        # Acceptability (1-3)
+    acc_mix_note = db.Column(db.Text)
+    
+    # Kita bisa rapikan namanya atau sesuaikan dengan 3 dimensi:
+    # 1. Accuracy, 2. Acceptability, 3. Readability untuk Full
+    acc_f = db.Column(db.Integer)  # Accuracy Full
+    cep_f = db.Column(db.Integer)  # Acceptability Full
+    rea_f = db.Column(db.Integer)  # Readability Full
+    
+    # --- DIMENSI UNTUK MIX TEXT (Indo-Jawa / Indo-Palembang) ---
+    acc_m = db.Column(db.Integer)  # Accuracy Mix
+    cep_m = db.Column(db.Integer)  # Acceptability Mix
+    rea_m = db.Column(db.Integer)  # Readability Mix
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
