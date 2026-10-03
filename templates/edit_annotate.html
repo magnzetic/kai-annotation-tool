@@ -15,7 +15,7 @@
         <form method="POST">
             <!-- ORIGINAL TEXT -->
             <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-primary text-white">Teks Asli (Indonesia)</div>
+                <div class="card-header bg-primary text-white">Review Asli (Indonesia)</div>
                 <div class="card-body">
                     <p class="fs-5 mb-0"><strong>"{{ review.content }}"</strong></p>
                 </div>
@@ -27,8 +27,13 @@
                 <div class="card-body">
                     <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
                     
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">✍️ Revisi Teks Full:</label>
+                        <textarea name="rev_full" class="form-control" rows="2">{{ anno.rev_full }}</textarea>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Accuracy (1-3):</label>
+                        <label class="form-label fw-bold">Accuracy:</label>
                         <select name="acc_full" class="form-select">
                             <option value="3" {% if anno.acc_f == 3 %}selected{% endif %}>3 — Accurate</option>
                             <option value="2" {% if anno.acc_f == 2 %}selected{% endif %}>2 — Less Accurate</option>
@@ -37,7 +42,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Acceptability (1-3):</label>
+                        <label class="form-label fw-bold">Acceptability:</label>
                         <select name="accept_full" class="form-select">
                             <option value="3" {% if anno.cep_f == 3 %}selected{% endif %}>3 — Acceptable</option>
                             <option value="2" {% if anno.cep_f == 2 %}selected{% endif %}>2 — Less Acceptable</option>
@@ -46,7 +51,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Readability (1-3):</label>
+                        <label class="form-label fw-bold">Readability:</label>
                         <select name="read_full" class="form-select">
                             <option value="3" {% if anno.rea_f == 3 %}selected{% endif %}>3 — Readable</option>
                             <option value="2" {% if anno.rea_f == 2 %}selected{% endif %}>2 — Less Readable</option>
@@ -62,8 +67,13 @@
                 <div class="card-body">
                     <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang }}</p>
                     
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">✍️ Revisi Teks Code-Mixed:</label>
+                        <textarea name="rev_mix" class="form-control" rows="2">{{ anno.rev_mix }}</textarea>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Accuracy (1-3):</label>
+                        <label class="form-label fw-bold">Accuracy:</label>
                         <select name="acc_mix" class="form-select">
                             <option value="3" {% if anno.acc_m == 3 %}selected{% endif %}>3 — Accurate</option>
                             <option value="2" {% if anno.acc_m == 2 %}selected{% endif %}>2 — Less Accurate</option>
@@ -72,7 +82,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Acceptability (1-3):</label>
+                        <label class="form-label fw-bold">Acceptability:</label>
                         <select name="accept_mix" class="form-select">
                             <option value="3" {% if anno.cep_m == 3 %}selected{% endif %}>3 — Acceptable</option>
                             <option value="2" {% if anno.cep_m == 2 %}selected{% endif %}>2 — Less Acceptable</option>
@@ -81,7 +91,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Readability (1-3):</label>
+                        <label class="form-label fw-bold">Readability:</label>
                         <select name="read_mix" class="form-select">
                             <option value="3" {% if anno.rea_m == 3 %}selected{% endif %}>3 — Readable</option>
                             <option value="2" {% if anno.rea_m == 2 %}selected{% endif %}>2 — Less Readable</option>
