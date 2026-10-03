@@ -7,12 +7,26 @@
 </head>
 <body class="bg-light">
     <div class="container py-5">
+        <!-- HEADER & NAVIGASI CEPAT -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="mb-0">Review ID: #{{ item.id }}</h4>
                 <small class="text-muted">Annotator: {{ current_user.username }} (Role: {{ current_user.role | capitalize }})</small>
             </div>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">← Kembali ke Dashboard</a>
+            <div>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-secondary btn-sm me-2">📋 Riwayat & Edit Anotasi</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">← Dashboard</a>
+            </div>
+        </div>
+
+        <!-- PETUNJUK ANOTASI -->
+        <div class="card mb-4 shadow-sm border-info">
+            <div class="card-body bg-white">
+                <h5 class="card-title text-info">📌 Petunjuk Anotasi</h5>
+                <p class="card-text small text-muted mb-2">
+                    Nilai kualitas terjemahan berdasarkan 3 aspek: <strong>Accuracy</strong>, <strong>Acceptability</strong>, dan <strong>Readability</strong>. Jika ada nilai di bawah 3, Anda <strong>wajib</strong> mengisi kotak revisi teks.
+                </p>
+            </div>
         </div>
 
         <form id="annotationForm" action="{{ url_for('submit', review_id=item.id) }}" method="POST">
@@ -33,12 +47,13 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
-                        <p class="p-3 bg-light rounded fs-5 border" id="orig_full">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
+                        <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
                     </div>
 
+                    <!-- Kotak Revisi Kosong (Default Blank) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Full <span id="req_label_full" class="text-danger d-none">(Wajib diisi karena ada nilai < 3)</span>:</label>
-                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan jika ada nilai di bawah 3...">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</textarea>
+                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Full <span id="req_label_full" class="text-danger d-none fw-bold">(Wajib diisi karena ada nilai < 3)</span>:</label>
+                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini jika memberikan nilai di bawah 3..."></textarea>
                     </div>
 
                     <hr>
@@ -79,9 +94,10 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</p>
                     </div>
 
+                    <!-- Kotak Revisi Kosong (Default Blank) -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Code-Mixed <span id="req_label_mix" class="text-danger d-none">(Wajib diisi karena ada nilai < 3)</span>:</label>
-                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan jika ada nilai di bawah 3...">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</textarea>
+                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Code-Mixed <span id="req_label_mix" class="text-danger d-none fw-bold">(Wajib diisi karena ada nilai < 3)</span>:</label>
+                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini jika memberikan nilai di bawah 3..."></textarea>
                     </div>
 
                     <hr>
@@ -123,14 +139,14 @@
             let scoresFull = document.querySelectorAll('.score-full:checked');
             let hasLowFull = Array.from(scoresFull).some(r => parseInt(r.value) < 3);
             let revFullVal = document.getElementById('rev_full').value.trim();
-            
             let labelFull = document.getElementById('req_label_full');
+            
             if (hasLowFull) {
                 labelFull.classList.remove('d-none');
                 if (!revFullVal) {
-                    alert('Mohon isi teks revisi pada Terjemahan Full karena terdapat nilai di bawah 3!');
-                    e.preventDefault();
-                    return;
+                    alert('⚠️ Gagal Kirim: Mohon isi teks revisi pada Terjemahan Full karena terdapat nilai di bawah 3!');
+                    e.preventDefault(); // Menghentikan submit agar tidak lanjut ke data berikutnya
+                    return false;
                 }
             } else {
                 labelFull.classList.add('d-none');
@@ -140,14 +156,14 @@
             let scoresMix = document.querySelectorAll('.score-mix:checked');
             let hasLowMix = Array.from(scoresMix).some(r => parseInt(r.value) < 3);
             let revMixVal = document.getElementById('rev_mix').value.trim();
-            
             let labelMix = document.getElementById('req_label_mix');
+            
             if (hasLowMix) {
                 labelMix.classList.remove('d-none');
                 if (!revMixVal) {
-                    alert('Mohon isi teks revisi pada Terjemahan Code-Mixed karena terdapat nilai di bawah 3!');
-                    e.preventDefault();
-                    return;
+                    alert('⚠️ Gagal Kirim: Mohon isi teks revisi pada Terjemahan Code-Mixed karena terdapat nilai di bawah 3!');
+                    e.preventDefault(); // Menghentikan submit agar tidak lanjut ke data berikutnya
+                    return false;
                 }
             } else {
                 labelMix.classList.add('d-none');
