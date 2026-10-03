@@ -55,17 +55,17 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Skor 3 dimensi Full
+    # 3 Dimensi Full
     acc_f = db.Column(db.Integer)
     cep_f = db.Column(db.Integer)
     rea_f = db.Column(db.Integer)
-    rev_full = db.Column(db.Text)  # <-- Revisi teks manual Full
+    rev_full = db.Column(db.Text)
     
-    # Skor 3 dimensi Mix
+    # 3 Dimensi Mix
     acc_m = db.Column(db.Integer)
     cep_m = db.Column(db.Integer)
     rea_m = db.Column(db.Integer)
-    rev_mix = db.Column(db.Text)  # <-- Revisi teks manual Mix
+    rev_mix = db.Column(db.Text)
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -134,22 +134,21 @@ def history():
 @login_required
 def edit_annotation(annotation_id):
     anno = Annotation.query.get_or_404(annotation_id)
-    # Pastikan hanya user bersangkutan yang bisa edit
     if anno.user_id != current_user.id:
         return redirect(url_for('history'))
         
     review = Review.query.get(anno.review_id)
     
     if request.method == 'POST':
-        # Update nilai Full Translation
         anno.acc_f = request.form.get('acc_full', type=int)
         anno.cep_f = request.form.get('accept_full', type=int)
         anno.rea_f = request.form.get('read_full', type=int)
+        anno.rev_full = request.form.get('rev_full')
         
-        # Update nilai Code-Mixed Translation
         anno.acc_m = request.form.get('acc_mix', type=int)
         anno.cep_m = request.form.get('accept_mix', type=int)
         anno.rea_m = request.form.get('read_mix', type=int)
+        anno.rev_mix = request.form.get('rev_mix')
         
         db.session.commit()
         return redirect(url_for('history'))
@@ -185,13 +184,11 @@ def submit(review_id):
     new_anno = Annotation(
         review_id=review_id,
         user_id=current_user.id,
-        # Full
         acc_f=request.form.get('acc_full', type=int),
         cep_f=request.form.get('accept_full', type=int),
         rea_f=request.form.get('read_full', type=int),
         rev_full=request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang),
         
-        # Mix
         acc_m=request.form.get('acc_mix', type=int),
         cep_m=request.form.get('accept_mix', type=int),
         rea_m=request.form.get('read_mix', type=int),
