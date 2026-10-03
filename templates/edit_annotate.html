@@ -2,110 +2,99 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAI Workspace - Edit Anotasi</title>
+    <title>Edit Anotasi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-
-    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
-        <div class="container d-flex justify-content-between">
-            <span class="navbar-brand mb-0 h1">Edit Anotasi: <span class="text-warning">{{ current_user.username }}</span></span>
-            <a href="{{ url_for('history') }}" class="btn btn-outline-light btn-sm">← Kembali ke Riwayat</a>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Edit Penilaian Review ID: #{{ review.id }}</h2>
+            <a href="{{ url_for('history') }}" class="btn btn-secondary btn-sm">← Kembali ke Riwayat</a>
         </div>
-    </nav>
 
-    <div class="container pb-5">
-        <div class="row justify-content-center">
-            <div class="col-md-9">
-                
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <h6 class="text-uppercase text-muted fw-bold small">Review Asli (Indonesia)</h6>
-                        <div class="alert alert-secondary fs-5 fst-italic mb-3">
-                            "{{ review.content }}"
-                        </div>
+        <form method="POST">
+            <!-- ORIGINAL TEXT -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">Teks Asli (Indonesia)</div>
+                <div class="card-body">
+                    <p class="fs-5 mb-0"><strong>"{{ review.content }}"</strong></p>
+                </div>
+            </div>
 
-                        <h6 class="text-uppercase text-muted fw-bold small">Aspek & Sentimen ABSA</h6>
-                        <div>
-                            {% if review.performa %}<span class="badge bg-primary me-1">Performa: {{ review.performa }}</span>{% endif %}
-                            {% if review.tampilan %}<span class="badge bg-success me-1">Tampilan: {{ review.tampilan }}</span>{% endif %}
-                            {% if review.tiket %}<span class="badge bg-info text-dark me-1">Tiket: {{ review.tiket }}</span>{% endif %}
-                            {% if review.pembayaran %}<span class="badge bg-warning text-dark me-1">Pembayaran: {{ review.pembayaran }}</span>{% endif %}
-                            {% if review.akun %}<span class="badge bg-danger me-1">Akun: {{ review.akun }}</span>{% endif %}
-                        </div>
+            <!-- FULL TRANSLATION -->
+            <div class="card mb-4 shadow-sm border-primary">
+                <div class="card-header bg-secondary text-white fw-bold">1. Terjemahan Full</div>
+                <div class="card-body">
+                    <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Accuracy (1-3):</label>
+                        <select name="acc_full" class="form-select">
+                            <option value="3" {% if anno.acc_f == 3 %}selected{% endif %}>3 — Accurate</option>
+                            <option value="2" {% if anno.acc_f == 2 %}selected{% endif %}>2 — Less Accurate</option>
+                            <option value="1" {% if anno.acc_f == 1 %}selected{% endif %}>1 — Inaccurate</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Acceptability (1-3):</label>
+                        <select name="accept_full" class="form-select">
+                            <option value="3" {% if anno.cep_f == 3 %}selected{% endif %}>3 — Acceptable</option>
+                            <option value="2" {% if anno.cep_f == 2 %}selected{% endif %}>2 — Less Acceptable</option>
+                            <option value="1" {% if anno.cep_f == 1 %}selected{% endif %}>1 — Not Acceptable</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Readability (1-3):</label>
+                        <select name="read_full" class="form-select">
+                            <option value="3" {% if anno.rea_f == 3 %}selected{% endif %}>3 — Readable</option>
+                            <option value="2" {% if anno.rea_f == 2 %}selected{% endif %}>2 — Less Readable</option>
+                            <option value="1" {% if anno.rea_f == 1 %}selected{% endif %}>1 — Not Readable</option>
+                        </select>
                     </div>
                 </div>
-
-                <form method="POST">
-                    
-                    <!-- 1. Terjemahan Full -->
-                    <div class="card shadow-sm border-0 mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold fs-6 mb-3">1. Terjemahan Full</h5>
-                            
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="option_full" id="edit_valid_full" value="valid" {% if anno.status_full == 'valid' %}checked{% endif %} onclick="toggleRevisi('full', false)">
-                                <label class="form-check-label text-success fw-bold" for="edit_valid_full">
-                                    ✓ Sudah Sesuai / Valid
-                                </label>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="option_full" id="edit_revise_full" value="revise" {% if anno.status_full == 'revise' %}checked{% endif %} onclick="toggleRevisi('full', true)">
-                                <label class="form-check-label text-danger fw-bold" for="edit_revise_full">
-                                    ✍️ Perlu Revisi Manual
-                                </label>
-                            </div>
-
-                            <div id="box_rev_full" style="display: {% if anno.status_full == 'revise' %}block{% else %}none{% endif %};">
-                                <textarea name="rev_full" class="form-control" rows="3" placeholder="Tulis perbaikan terjemahan full...">{{ anno.rev_full if anno.rev_full else '' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. Terjemahan Code-Mixed -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold fs-6 mb-3">2. Terjemahan Code-Mixed</h5>
-                            
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="option_mix" id="edit_valid_mix" value="valid" {% if anno.status_mix == 'valid' %}checked{% endif %} onclick="toggleRevisi('mix', false)">
-                                <label class="form-check-label text-success fw-bold" for="edit_valid_mix">
-                                    ✓ Sudah Sesuai / Valid
-                                </label>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="option_mix" id="edit_revise_mix" value="revise" {% if anno.status_mix == 'revise' %}checked{% endif %} onclick="toggleRevisi('mix', true)">
-                                <label class="form-check-label text-danger fw-bold" for="edit_revise_mix">
-                                    ✍️ Perlu Revisi Manual
-                                </label>
-                            </div>
-
-                            <div id="box_rev_mix" style="display: {% if anno.status_mix == 'revise' %}block{% else %}none{% endif %};">
-                                <textarea name="rev_mix" class="form-control" rows="3" placeholder="Tulis perbaikan code-mixed...">{{ anno.rev_mix if anno.rev_mix else '' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">SIMPAN PERUBAHAN</button>
-                    </div>
-
-                </form>
-
             </div>
-        </div>
-    </div>
 
-    <script>
-        function toggleRevisi(type, show) {
-            const box = document.getElementById('box_rev_' + type);
-            if (show) {
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
-        }
-    </script>
+            <!-- CODE-MIXED TRANSLATION -->
+            <div class="card mb-4 shadow-sm border-success">
+                <div class="card-header bg-success text-white fw-bold">2. Terjemahan Code-Mixed</div>
+                <div class="card-body">
+                    <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang }}</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Accuracy (1-3):</label>
+                        <select name="acc_mix" class="form-select">
+                            <option value="3" {% if anno.acc_m == 3 %}selected{% endif %}>3 — Accurate</option>
+                            <option value="2" {% if anno.acc_m == 2 %}selected{% endif %}>2 — Less Accurate</option>
+                            <option value="1" {% if anno.acc_m == 1 %}selected{% endif %}>1 — Inaccurate</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Acceptability (1-3):</label>
+                        <select name="accept_mix" class="form-select">
+                            <option value="3" {% if anno.cep_m == 3 %}selected{% endif %}>3 — Acceptable</option>
+                            <option value="2" {% if anno.cep_m == 2 %}selected{% endif %}>2 — Less Acceptable</option>
+                            <option value="1" {% if anno.cep_m == 1 %}selected{% endif %}>1 — Not Acceptable</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Readability (1-3):</label>
+                        <select name="read_mix" class="form-select">
+                            <option value="3" {% if anno.rea_m == 3 %}selected{% endif %}>3 — Readable</option>
+                            <option value="2" {% if anno.rea_m == 2 %}selected{% endif %}>2 — Less Readable</option>
+                            <option value="1" {% if anno.rea_m == 1 %}selected{% endif %}>1 — Not Readable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
