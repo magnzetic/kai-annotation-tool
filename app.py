@@ -133,6 +133,7 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
+    # Ambil semua data anotasi yang pernah dikerjakan oleh user ini
     annotations = Annotation.query.filter_by(user_id=current_user.id).all()
     return render_template('history.html', annotations=annotations)
 
@@ -140,17 +141,22 @@ def history():
 @login_required
 def edit_annotation(annotation_id):
     anno = Annotation.query.get_or_404(annotation_id)
+    # Pastikan hanya user bersangkutan yang bisa edit
     if anno.user_id != current_user.id:
         return redirect(url_for('history'))
         
     review = Review.query.get(anno.review_id)
     
     if request.method == 'POST':
-        anno.status_full = request.form.get('option_full')
-        anno.rev_full = request.form.get('rev_full') if anno.status_full == 'revise' else review.trans_jawa
+        # Update nilai Full Translation
+        anno.acc_f = request.form.get('acc_full', type=int)
+        anno.cep_f = request.form.get('accept_full', type=int)
+        anno.rea_f = request.form.get('read_full', type=int)
         
-        anno.status_mix = request.form.get('option_mix')
-        anno.rev_mix = request.form.get('rev_mix') if anno.status_mix == 'revise' else review.trans_mix_jawa
+        # Update nilai Code-Mixed Translation
+        anno.acc_m = request.form.get('acc_mix', type=int)
+        anno.cep_m = request.form.get('accept_mix', type=int)
+        anno.rea_m = request.form.get('read_mix', type=int)
         
         db.session.commit()
         return redirect(url_for('history'))
@@ -184,12 +190,9 @@ def submit(review_id):
     new_anno = Annotation(
         review_id=review_id,
         user_id=current_user.id,
-        # Tangkap nilai dari form Full Translation
         acc_f=request.form.get('acc_full', type=int),
         cep_f=request.form.get('accept_full', type=int),
         rea_f=request.form.get('read_full', type=int),
-        
-        # Tangkap nilai dari form Code-Mixed Translation
         acc_m=request.form.get('acc_mix', type=int),
         cep_m=request.form.get('accept_mix', type=int),
         rea_m=request.form.get('read_mix', type=int)
