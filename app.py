@@ -184,10 +184,15 @@ def submit(review_id):
     new_anno = Annotation(
         review_id=review_id,
         user_id=current_user.id,
-        status_full=request.form.get('option_full'),
-        rev_full=request.form.get('rev_full') if request.form.get('option_full') == 'revise' else None,
-        status_mix=request.form.get('option_mix'),
-        rev_mix=request.form.get('rev_mix') if request.form.get('option_mix') == 'revise' else None
+        # Tangkap nilai dari form Full Translation
+        acc_f=request.form.get('acc_full', type=int),
+        cep_f=request.form.get('accept_full', type=int),
+        rea_f=request.form.get('read_full', type=int),
+        
+        # Tangkap nilai dari form Code-Mixed Translation
+        acc_m=request.form.get('acc_mix', type=int),
+        cep_m=request.form.get('accept_mix', type=int),
+        rea_m=request.form.get('read_mix', type=int)
     )
     db.session.add(new_anno)
     db.session.commit()
