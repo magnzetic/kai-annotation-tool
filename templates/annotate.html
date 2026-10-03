@@ -2,137 +2,184 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAI Workspace - Anotasi</title>
+    <title>Halaman Anotasi - KAI Annotation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+</head><body class="bg-light">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Form Anotasi Kualitas Terjemahan</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">Kembali ke Dashboard</a>
+        </div>
 
-    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
-        <div class="container d-flex justify-content-between">
-            <span class="navbar-brand mb-0 h1">Annotator: <span class="text-warning">{{ current_user.username }}</span> (Role: {{ current_user.role|capitalize }})</span>
-            <div>
-                <a href="{{ url_for('history') }}" class="btn btn-outline-light btn-sm me-2">📋 Riwayat & Edit Anotasi</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+        <!-- PETUNJUK ANOTASI -->
+        <div class="card mb-4 shadow-sm border-info">
+            <div class="card-body bg-white">
+                <h5 class="card-title text-info">📌 Petunjuk Anotasi</h5>
+                <p class="card-text small text-muted mb-2">
+                    Anda akan diberikan sebuah kalimat dalam bahasa Indonesia dan hasil terjemahannya ke dalam bahasa target. 
+                    Silakan menilai kualitas terjemahan berdasarkan tiga aspek utama:
+                </p>
+                <ul class="small text-muted mb-0">
+                    <li><strong>Accuracy:</strong> Menilai kesesuaian makna terjemahan dengan teks asli.</li>
+                    <li><strong>Acceptability:</strong> Menilai kewajaran dan kesesuaian penggunaan bahasa target.</li>
+                    <li><strong>Readability:</strong> Menilai kemudahan terjemahan untuk dipahami.</li>
+                </ul>
+                <hr class="my-2">
+                <p class="small text-danger mb-0">
+                    <em>Catatan untuk Code-Mixed:</em> Penggunaan bahasa Indonesia pada bagian tertentu tidak dianggap sebagai kesalahan, selama penggunaannya sesuai dengan pola code-mixing yang wajar dan konteks kalimat.
+                </p>
             </div>
         </div>
-    </nav>
 
-    <div class="container pb-5">
-        <div class="row justify-content-center">
-            <div class="col-md-9">
-                
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <a href="{{ url_for('dashboard') }}" class="text-decoration-none text-muted">← Kembali ke Dashboard</a>
-                    <span class="badge bg-secondary">Review ID: #{{ item.id }}</span>
+        <form action="{{ url_for('submit', review_id=item.id) }}" method="POST">
+            
+            <!-- ORIGINAL TEXT -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">Teks Asli (Bahasa Indonesia)</div>
+                <div class="card-body">
+                    <p class="fs-5 mb-0"><strong>{{ item.content }}</strong></p>
                 </div>
+            </div>
 
-                <!-- Review Asli & ABSA -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <h6 class="text-uppercase text-muted fw-bold small">Review Asli (Indonesia)</h6>
-                        <div class="alert alert-secondary fs-5 fst-italic mb-3">
-                            "{{ item.content }}"
-                        </div>
-
-                        <h6 class="text-uppercase text-muted fw-bold small">Aspek & Sentimen ABSA</h6>
-                        <div>
-                            {% if item.performa %}<span class="badge bg-primary me-1">Performa: {{ item.performa }}</span>{% endif %}
-                            {% if item.tampilan %}<span class="badge bg-success me-1">Tampilan: {{ item.tampilan }}</span>{% endif %}
-                            {% if item.tiket %}<span class="badge bg-info text-dark me-1">Tiket: {{ item.tiket }}</span>{% endif %}
-                            {% if item.pembayaran %}<span class="badge bg-warning text-dark me-1">Pembayaran: {{ item.pembayaran }}</span>{% endif %}
-                            {% if item.akun %}<span class="badge bg-danger me-1">Akun: {{ item.akun }}</span>{% endif %}
-                        </div>
-                    </div>
+            <!-- BAGIAN 1: FULL TRANSLATION -->
+            <div class="card mb-4 shadow-sm border-primary">
+                <div class="card-header bg-secondary text-white">
+                    Hasil Terjemahan Full ({{ 'Bahasa Jawa' if role == 'jawa' else 'Bahasa Palembang' }})
                 </div>
-
-                <!-- Form Validasi & Revisi -->
-                <form action="{{ url_for('submit', review_id=item.id) }}" method="POST">
+                <div class="card-body">
+                    <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
                     
-                    <!-- 1. Terjemahan Full -->
-                    <div class="card shadow-sm border-0 mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold fs-6 mb-3">1. Terjemahan Full ({{ role|capitalize }})</h5>
-                            
-                            <div class="p-3 bg-light border rounded mb-3">
-                                <span class="text-muted small d-block mb-1">Hasil Generate LLM:</span>
-                                <p class="mb-0 fw-semibold text-dark" id="llm_full_text">
-                                    {% if role == 'jawa' %}{{ item.trans_jawa }}{% else %}{{ item.trans_palembang }}{% endif %}
-                                </p>
-                            </div>
+                    {% if role == 'jawa' %}
+                    <div class="alert alert-secondary py-2 small mb-3">Untuk terjemahan full bahasa Jawa, nilai apakah teks sudah menggunakan bahasa Jawa secara natural dan sesuai dengan kebiasaan penutur bahasa Jawa.</div>
+                    {% else %}
+                    <div class="alert alert-secondary py-2 small mb-3">Untuk terjemahan full bahasa Palembang, nilai apakah teks sudah menggunakan bahasa Palembang secara natural dan sesuai dengan kebiasaan penutur bahasa Palembang.</div>
+                    {% endif %}
 
-                            <!-- Opsi Pilihan User -->
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="option_full" id="valid_full" value="valid" checked onclick="toggleRevisi('full', false)">
-                                <label class="form-check-label text-success fw-bold" for="valid_full">
-                                    ✓ Sudah Sesuai / Valid (Tidak perlu revisi)
-                                </label>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="option_full" id="revise_full" value="revise" onclick="toggleRevisi('full', true)">
-                                <label class="form-check-label text-danger fw-bold" for="revise_full">
-                                    ✍️ Perlu Revisi Manual (Ketik perbaikan)
-                                </label>
-                            </div>
-
-                            <!-- Kolom Textarea (Hidden by default) -->
-                            <div id="box_rev_full" style="display: none;">
-                                <textarea name="rev_full" class="form-control" rows="3" placeholder="Tulis perbaikan terjemahan di sini..."></textarea>
-                            </div>
+                    <!-- 1. ACCURACY -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Accuracy (Seberapa akurat terjemahan dari bahasa Indonesia ke bahasa target?)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_full" value="3" required>
+                            <label class="form-check-label"><strong>3 — Accurate:</strong> Makna teks asli tersampaikan secara akurat dan tidak terdapat distorsi makna.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_full" value="2">
+                            <label class="form-check-label"><strong>2 — Less Accurate:</strong> Sebagian besar makna tersampaikan, tetapi terdapat sedikit distorsi atau ambiguitas.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_full" value="1">
+                            <label class="form-check-label"><strong>1 — Inaccurate:</strong> Makna tidak tersampaikan dengan baik atau terdapat perubahan makna yang signifikan.</label>
                         </div>
                     </div>
 
-                    <!-- 2. Terjemahan Code-Mixed -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold fs-6 mb-3">2. Terjemahan Code-Mixed (Indo - {{ role|capitalize }})</h5>
-                            
-                            <div class="p-3 bg-light border rounded mb-3">
-                                <span class="text-muted small d-block mb-1">Hasil Generate LLM:</span>
-                                <p class="mb-0 fw-semibold text-dark">
-                                    {% if role == 'jawa' %}{{ item.trans_mix_jawa }}{% else %}{{ item.trans_mix_palembang }}{% endif %}
-                                </p>
-                            </div>
-
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="option_mix" id="valid_mix" value="valid" checked onclick="toggleRevisi('mix', false)">
-                                <label class="form-check-label text-success fw-bold" for="valid_mix">
-                                    ✓ Sudah Sesuai / Valid (Tidak perlu revisi)
-                                </label>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="option_mix" id="revise_mix" value="revise" onclick="toggleRevisi('mix', true)">
-                                <label class="form-check-label text-danger fw-bold" for="revise_mix">
-                                    ✍️ Perlu Revisi Manual (Ketik perbaikan)
-                                </label>
-                            </div>
-
-                            <div id="box_rev_mix" style="display: none;">
-                                <textarea name="rev_mix" class="form-control" rows="3" placeholder="Tulis perbaikan code-mixed di sini..."></textarea>
-                            </div>
+                    <!-- 2. ACCEPTABILITY -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. Acceptability (Seberapa dapat diterima terjemahan tersebut berdasarkan kaidah & kebiasaan penutur?)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_full" value="3" required>
+                            <label class="form-check-label"><strong>3 — Acceptable:</strong> Natural dan sesuai dengan penggunaan bahasa target.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_full" value="2">
+                            <label class="form-check-label"><strong>2 — Less Acceptable:</strong> Secara umum natural, tetapi terdapat beberapa masalah kecil dalam tata bahasa.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_full" value="1">
+                            <label class="form-check-label"><strong>1 — Not Acceptable:</strong> Tidak natural atau terasa seperti terjemahan langsung dari bahasa Indonesia.</label>
                         </div>
                     </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark shadow-sm">SIMPAN & LANJUT DATA BERIKUTNYA →</button>
+                    <!-- 3. READABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">3. Readability (Seberapa mudah terjemahan tersebut dipahami?)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_full" value="3" required>
+                            <label class="form-check-label"><strong>3 — Readable:</strong> Sangat mudah dipahami tanpa perlu membaca ulang.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_full" value="2">
+                            <label class="form-check-label"><strong>2 — Less Readable:</strong> Dapat dipahami, tetapi beberapa bagian perlu dibaca ulang.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_full" value="1">
+                            <label class="form-check-label"><strong>1 — Not Readable:</strong> Sulit dipahami.</label>
+                        </div>
                     </div>
-
-                </form>
-
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Script JavaScript untuk memunculkan Textarea jika dipilih 'Revisi' -->
-    <script>
-        function toggleRevisi(type, show) {
-            const box = document.getElementById('box_rev_' + type);
-            if (show) {
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
-        }
-    </script>
+            <!-- BAGIAN 2: CODE-MIXED TRANSLATION -->
+            <div class="card mb-4 shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    Hasil Terjemahan Code-Mixed ({{ 'Indo-Jawa' if role == 'jawa' else 'Indo-Palembang' }})
+                </div>
+                <div class="card-body">
+                    <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</p>
+                    
+                    {% if role == 'jawa' %}
+                    <div class="alert alert-success py-2 small mb-3">Untuk terjemahan code-mixed Indonesia–Jawa, nilai apakah perpaduan bahasa Indonesia dan Jawa terdengar natural. Penggunaan bahasa Indonesia <strong>tidak dianggap kesalahan</strong> apabila sesuai konteks code-mixing.</div>
+                    {% else %}
+                    <div class="alert alert-success py-2 small mb-3">Untuk terjemahan code-mixed Indonesia–Palembang, nilai apakah perpaduan bahasa Indonesia dan Palembang terdengar natural. Penggunaan bahasa Indonesia <strong>tidak dianggap kesalahan</strong> apabila sesuai konteks code-mixing.</div>
+                    {% endif %}
+
+                    <!-- 1. ACCURACY -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Accuracy (Kesesuaian Makna)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_mix" value="3" required>
+                            <label class="form-check-label"><strong>3 — Accurate</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_mix" value="2">
+                            <label class="form-check-label"><strong>2 — Less Accurate</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="acc_mix" value="1">
+                            <label class="form-check-label"><strong>1 — Inaccurate</strong></label>
+                        </div>
+                    </div>
+
+                    <!-- 2. ACCEPTABILITY -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. Acceptability (Kewajaran Code-Mixing)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_mix" value="3" required>
+                            <label class="form-check-label"><strong>3 — Acceptable</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_mix" value="2">
+                            <label class="form-check-label"><strong>2 — Less Acceptable</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accept_mix" value="1">
+                            <label class="form-check-label"><strong>1 — Not Acceptable</strong></label>
+                        </div>
+                    </div>
+
+                    <!-- 3. READABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">3. Readability (Kemudahan Pemahaman)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_mix" value="3" required>
+                            <label class="form-check-label"><strong>3 — Readable</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_mix" value="2">
+                            <label class="form-check-label"><strong>2 — Less Readable</strong></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="read_mix" value="1">
+                            <label class="form-check-label"><strong>1 — Not Readable</strong></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Kirim Anotasi</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
