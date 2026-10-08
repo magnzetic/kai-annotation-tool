@@ -7,6 +7,7 @@
 </head>
 <body class="bg-light">
     <div class="container py-5">
+        <!-- HEADER & NAVIGASI CEPAT -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="mb-0">Review ID: #{{ item.id }}</h4>
@@ -22,8 +23,9 @@
         <div class="card mb-4 shadow-sm border-info">
             <div class="card-body bg-white">
                 <h5 class="card-title text-info">📌 Petunjuk Anotasi</h5>
-                <p class="card-text small text-muted mb-2">
-                    Nilai kualitas terjemahan berdasarkan 3 aspek: <strong>Accuracy</strong>, <strong>Acceptability</strong>, dan <strong>Readability</strong>. Jika ada nilai di bawah 3, Anda <strong>wajib</strong> mengisi kotak revisi teks.
+                <p class="card-text small text-muted mb-0">
+                    1. Tentukan apakah terjemahan memerlukan perbaikan.<br>
+                    2. Jika <strong>Ya</strong>, ketik teks revisinya, lalu berikan penilaian kualitas (Accuracy, Acceptability, Readability).
                 </p>
             </div>
         </div>
@@ -38,7 +40,7 @@
                 </div>
             </div>
 
-            <!-- BAGIAN 1: FULL TRANSLATION -->
+            <!-- ================= BAGIAN 1: FULL TRANSLATION ================= -->
             <div class="card mb-4 shadow-sm border-primary">
                 <div class="card-header bg-secondary text-white fw-bold">
                     1. Terjemahan Full ({{ 'Bahasa Jawa' if role == 'jawa' else 'Bahasa Palembang' }})
@@ -49,40 +51,55 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
                     </div>
 
-                    <!-- Kotak Revisi Kosong (Default Blank) -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Full <span id="req_label_full" class="text-danger d-none fw-bold">(Wajib diisi karena ada nilai < 3)</span>:</label>
-                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini jika memberikan nilai di bawah 3..."></textarea>
+                    <!-- Pertanyaan Awal: Perlu Perbaikan? -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" checked>
+                            <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes">
+                            <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
+                        </div>
+                    </div>
+
+                    <!-- Kolom Teks Revisi (Hidden by default, muncul jika pilih 'Ya') -->
+                    <div id="container_rev_full" class="mb-4 d-none">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan:</label>
+                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
                     </div>
 
                     <hr>
+                    <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
+
                     <!-- 1. ACCURACY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">1. Accuracy (Kesesuaian Makna)</label>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="acc_full" value="3" required checked><label class="form-check-label"><strong>3 — Accurate</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="acc_full" value="2"><label class="form-check-label"><strong>2 — Less Accurate</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="acc_full" value="1"><label class="form-check-label"><strong>1 — Inaccurate</strong></label></div>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" required checked><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="2"><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
                     <!-- 2. ACCEPTABILITY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">2. Acceptability (Kewajaran Bahasa Target)</label>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="accept_full" value="3" required checked><label class="form-check-label"><strong>3 — Acceptable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="accept_full" value="2"><label class="form-check-label"><strong>2 — Less Acceptable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="accept_full" value="1"><label class="form-check-label"><strong>1 — Not Acceptable</strong></label></div>
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" required checked><label class="form-check-label">3 — Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="2"><label class="form-check-label">2 — Less Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
                     <!-- 3. READABILITY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">3. Readability (Kemudahan Pemahaman)</label>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="read_full" value="3" required checked><label class="form-check-label"><strong>3 — Readable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="read_full" value="2"><label class="form-check-label"><strong>2 — Less Readable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-full" type="radio" name="read_full" value="1"><label class="form-check-label"><strong>1 — Not Readable</strong></label></div>
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" required checked><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="2"><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="1"><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
                 </div>
             </div>
 
-            <!-- BAGIAN 2: CODE-MIXED TRANSLATION -->
+            <!-- ================= BAGIAN 2: CODE-MIXED TRANSLATION ================= -->
             <div class="card mb-4 shadow-sm border-success">
                 <div class="card-header bg-success text-white fw-bold">
                     2. Terjemahan Code-Mixed ({{ 'Indo-Jawa' if role == 'jawa' else 'Indo-Palembang' }})
@@ -93,35 +110,50 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</p>
                     </div>
 
-                    <!-- Kotak Revisi Kosong (Default Blank) -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark">✍️ Revisi Teks Code-Mixed <span id="req_label_mix" class="text-danger d-none fw-bold">(Wajib diisi karena ada nilai < 3)</span>:</label>
-                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini jika memberikan nilai di bawah 3..."></textarea>
+                    <!-- Pertanyaan Awal: Perlu Perbaikan? -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" checked>
+                            <label class="form-check-label" for="rev_mix_no">Tidak (Sudah Bagus)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes">
+                            <label class="form-check-label" for="rev_mix_yes">Ya (Perlu Perbaikan)</label>
+                        </div>
+                    </div>
+
+                    <!-- Kolom Teks Revisi (Hidden by default, muncul jika pilih 'Ya') -->
+                    <div id="container_rev_mix" class="mb-4 d-none">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan:</label>
+                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
                     </div>
 
                     <hr>
+                    <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
+
                     <!-- 1. ACCURACY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">1. Accuracy (Kesesuaian Makna)</label>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="acc_mix" value="3" required checked><label class="form-check-label"><strong>3 — Accurate</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="acc_mix" value="2"><label class="form-check-label"><strong>2 — Less Accurate</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="acc_mix" value="1"><label class="form-check-label"><strong>1 — Inaccurate</strong></label></div>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" required checked><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="2"><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
                     <!-- 2. ACCEPTABILITY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">2. Acceptability (Kewajaran Code-Mixing)</label>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="accept_mix" value="3" required checked><label class="form-check-label"><strong>3 — Acceptable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="accept_mix" value="2"><label class="form-check-label"><strong>2 — Less Acceptable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="accept_mix" value="1"><label class="form-check-label"><strong>1 — Not Acceptable</strong></label></div>
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" required checked><label class="form-check-label">3 — Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="2"><label class="form-check-label">2 — Less Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
                     <!-- 3. READABILITY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">3. Readability (Kemudahan Pemahaman)</label>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="read_mix" value="3" required checked><label class="form-check-label"><strong>3 — Readable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="read_mix" value="2"><label class="form-check-label"><strong>2 — Less Readable</strong></label></div>
-                        <div class="form-check"><input class="form-check-input score-mix" type="radio" name="read_mix" value="1"><label class="form-check-label"><strong>1 — Not Readable</strong></label></div>
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman)</label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" required checked><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="2"><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="1"><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
                 </div>
             </div>
@@ -133,39 +165,54 @@
     </div>
 
     <script>
-        document.getElementById('annotationForm').addEventListener('submit', function(e) {
-            // Cek Full
-            let scoresFull = document.querySelectorAll('.score-full:checked');
-            let hasLowFull = Array.from(scoresFull).some(r => parseInt(r.value) < 3);
-            let revFullVal = document.getElementById('rev_full').value.trim();
-            let labelFull = document.getElementById('req_label_full');
-            
-            if (hasLowFull) {
-                labelFull.classList.remove('d-none');
-                if (!revFullVal) {
-                    alert('⚠️ Gagal Kirim: Mohon isi teks revisi pada Terjemahan Full karena terdapat nilai di bawah 3!');
-                    e.preventDefault(); // Menghentikan submit agar tidak lanjut ke data berikutnya
-                    return false;
+        // Toggle muncul/hilangnya kotak teks revisi Full
+        document.querySelectorAll('.need-rev-full').forEach(radio => {
+            radio.addEventListener('change', function() {
+                let container = document.getElementById('container_rev_full');
+                let textarea = document.getElementById('rev_full');
+                if (this.value === 'yes') {
+                    container.classList.remove('d-none');
+                    textarea.required = true;
+                } else {
+                    container.classList.add('d-none');
+                    textarea.required = false;
+                    textarea.value = '';
                 }
-            } else {
-                labelFull.classList.add('d-none');
+            });
+        });
+
+        // Toggle muncul/hilangnya kotak teks revisi Mix
+        document.querySelectorAll('.need-rev-mix').forEach(radio => {
+            radio.addEventListener('change', function() {
+                let container = document.getElementById('container_rev_mix');
+                let textarea = document.getElementById('rev_mix');
+                if (this.value === 'yes') {
+                    container.classList.remove('d-none');
+                    textarea.required = true;
+                } else {
+                    container.classList.add('d-none');
+                    textarea.required = false;
+                    textarea.value = '';
+                }
+            });
+        });
+
+        // Validasi final sebelum submit
+        document.getElementById('annotationForm').addEventListener('submit', function(e) {
+            let needFull = document.querySelector('input[name="need_rev_full"]:checked').value;
+            let revFullVal = document.getElementById('rev_full').value.trim();
+            if (needFull === 'yes' && !revFullVal) {
+                alert('⚠️ Mohon isi teks revisi pada Terjemahan Full!');
+                e.preventDefault();
+                return false;
             }
 
-            // Cek Mix
-            let scoresMix = document.querySelectorAll('.score-mix:checked');
-            let hasLowMix = Array.from(scoresMix).some(r => parseInt(r.value) < 3);
+            let needMix = document.querySelector('input[name="need_rev_mix"]:checked').value;
             let revMixVal = document.getElementById('rev_mix').value.trim();
-            let labelMix = document.getElementById('req_label_mix');
-            
-            if (hasLowMix) {
-                labelMix.classList.remove('d-none');
-                if (!revMixVal) {
-                    alert('⚠️ Gagal Kirim: Mohon isi teks revisi pada Terjemahan Code-Mixed karena terdapat nilai di bawah 3!');
-                    e.preventDefault(); // Menghentikan submit agar tidak lanjut ke data berikutnya
-                    return false;
-                }
-            } else {
-                labelMix.classList.add('d-none');
+            if (needMix === 'yes' && !revMixVal) {
+                alert('⚠️ Mohon isi teks revisi pada Terjemahan Code-Mixed!');
+                e.preventDefault();
+                return false;
             }
         });
     </script>
