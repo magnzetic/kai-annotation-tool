@@ -139,15 +139,21 @@ def edit_annotation(annotation_id):
     review = Review.query.get(anno.review_id)
     
     if request.method == 'POST':
+        # Cek apakah butuh revisi Full
+        need_rev_full = request.form.get('need_rev_full')
+        anno.rev_full = request.form.get('rev_full') if need_rev_full == 'yes' else ''
+        
         anno.acc_f = request.form.get('acc_full', type=int)
         anno.cep_f = request.form.get('accept_full', type=int)
         anno.rea_f = request.form.get('read_full', type=int)
-        anno.rev_full = request.form.get('rev_full')
+        
+        # Cek apakah butuh revisi Mix
+        need_rev_mix = request.form.get('need_rev_mix')
+        anno.rev_mix = request.form.get('rev_mix') if need_rev_mix == 'yes' else ''
         
         anno.acc_m = request.form.get('acc_mix', type=int)
         anno.cep_m = request.form.get('accept_mix', type=int)
         anno.rea_m = request.form.get('read_mix', type=int)
-        anno.rev_mix = request.form.get('rev_mix')
         
         db.session.commit()
         return redirect(url_for('history'))
