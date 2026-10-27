@@ -37,23 +37,23 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
                     </div>
 
-                    <!-- Pertanyaan Perlu Perbaikan? -->
+                    <!-- Pertanyaan Perlu Perbaikan? (Default tidak terpilih agar bersih) -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if anno.rev_full == '' or not anno.rev_full %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full and anno.rev_full != '' %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <!-- Kolom Teks Revisi (Muncul jika 'Ya') -->
-                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full %}d-none{% endif %}">
+                    <!-- Kolom Teks Revisi (Kosong/Blank secara default, muncul jika 'Ya') -->
+                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full or anno.rev_full == '' %}d-none{% endif %}">
                         <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
-                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_full or '' }}</textarea>
+                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_full if anno.rev_full else '' }}</textarea>
                     </div>
 
                     <hr>
@@ -100,19 +100,19 @@
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" {% if not anno.rev_mix %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" {% if anno.rev_mix == '' or not anno.rev_mix %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_mix_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes" {% if anno.rev_mix %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes" {% if anno.rev_mix and anno.rev_mix != '' %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_mix_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <!-- Kolom Teks Revisi (Muncul jika 'Ya') -->
-                    <div id="container_rev_mix" class="mb-4 {% if not anno.rev_mix %}d-none{% endif %}">
+                    <!-- Kolom Teks Revisi (Kosong/Blank secara default, muncul jika 'Ya') -->
+                    <div id="container_rev_mix" class="mb-4 {% if not anno.rev_mix or anno.rev_mix == '' %}d-none{% endif %}">
                         <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
-                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_mix or '' }}</textarea>
+                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_mix if anno.rev_mix else '' }}</textarea>
                     </div>
 
                     <hr>
@@ -196,7 +196,7 @@
             let needMix = document.querySelector('input[name="need_rev_mix"]:checked').value;
             let revMixVal = document.getElementById('rev_mix').value.trim();
             if (needMix === 'yes' && !revMixVal) {
-                alert('⚠️ Mohon isi teks revisi pada Terjemahan Code-Mixed!');
+                alert('⚠️ Mohonisi teks revisi pada Terjemahan Code-Mixed!');
                 e.preventDefault();
                 return false;
             }
