@@ -2,17 +2,22 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Anotasi</title>
+    <title>Edit Anotasi - KAI Annotation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <div class="container py-5">
+        <!-- HEADER & NAVIGASI -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Edit Penilaian Review ID: #{{ review.id }}</h2>
+            <div>
+                <h4 class="mb-0">Edit Review ID: #{{ review.id }}</h4>
+                <small class="text-muted">Annotator: {{ current_user.username }} (Role: {{ current_user.role | capitalize }})</small>
+            </div>
             <a href="{{ url_for('history') }}" class="btn btn-secondary btn-sm">← Kembali ke Riwayat</a>
         </div>
 
-        <form method="POST">
+        <form id="editForm" method="POST">
+            
             <!-- ORIGINAL TEXT -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white">Review Asli (Indonesia)</div>
@@ -21,82 +26,120 @@
                 </div>
             </div>
 
-            <!-- FULL TRANSLATION -->
+            <!-- ================= BAGIAN 1: FULL TRANSLATION ================= -->
             <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-secondary text-white fw-bold">1. Terjemahan Full</div>
+                <div class="card-header bg-secondary text-white fw-bold">
+                    1. Terjemahan Full ({{ 'Bahasa Jawa' if current_user.role == 'jawa' else 'Bahasa Palembang' }})
+                </div>
                 <div class="card-body">
-                    <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">✍️ Revisi Teks Full:</label>
-                        <textarea name="rev_full" class="form-control" rows="2">{{ anno.rev_full }}</textarea>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
+                        <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Accuracy:</label>
-                        <select name="acc_full" class="form-select">
-                            <option value="3" {% if anno.acc_f == 3 %}selected{% endif %}>3 — Accurate</option>
-                            <option value="2" {% if anno.acc_f == 2 %}selected{% endif %}>2 — Less Accurate</option>
-                            <option value="1" {% if anno.acc_f == 1 %}selected{% endif %}>1 — Inaccurate</option>
-                        </select>
+                    <!-- Pertanyaan Perlu Perbaikan? -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full %}checked{% endif %} required>
+                            <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full %}checked{% endif %} required>
+                            <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Acceptability:</label>
-                        <select name="accept_full" class="form-select">
-                            <option value="3" {% if anno.cep_f == 3 %}selected{% endif %}>3 — Acceptable</option>
-                            <option value="2" {% if anno.cep_f == 2 %}selected{% endif %}>2 — Less Acceptable</option>
-                            <option value="1" {% if anno.cep_f == 1 %}selected{% endif %}>1 — Not Acceptable</option>
-                        </select>
+                    <!-- Kolom Teks Revisi (Muncul jika 'Ya') -->
+                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full %}d-none{% endif %}">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
+                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_full or '' }}</textarea>
                     </div>
 
+                    <hr>
+                    <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
+
+                    <!-- ACCURACY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Readability:</label>
-                        <select name="read_full" class="form-select">
-                            <option value="3" {% if anno.rea_f == 3 %}selected{% endif %}>3 — Readable</option>
-                            <option value="2" {% if anno.rea_f == 2 %}selected{% endif %}>2 — Less Readable</option>
-                            <option value="1" {% if anno.rea_f == 1 %}selected{% endif %}>1 — Not Readable</option>
-                        </select>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" {% if anno.acc_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="2" {% if anno.acc_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1" {% if anno.acc_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
+                    </div>
+
+                    <!-- ACCEPTABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" {% if anno.cep_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="2" {% if anno.cep_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1" {% if anno.cep_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Acceptable</label></div>
+                    </div>
+
+                    <!-- READABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" {% if anno.rea_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="2" {% if anno.rea_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="1" {% if anno.rea_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
                 </div>
             </div>
 
-            <!-- CODE-MIXED TRANSLATION -->
+            <!-- ================= BAGIAN 2: CODE-MIXED TRANSLATION ================= -->
             <div class="card mb-4 shadow-sm border-success">
-                <div class="card-header bg-success text-white fw-bold">2. Terjemahan Code-Mixed</div>
+                <div class="card-header bg-success text-white fw-bold">
+                    2. Terjemahan Code-Mixed ({{ 'Indo-Jawa' if current_user.role == 'jawa' else 'Indo-Palembang' }})
+                </div>
                 <div class="card-body">
-                    <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang }}</p>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">✍️ Revisi Teks Code-Mixed:</label>
-                        <textarea name="rev_mix" class="form-control" rows="2">{{ anno.rev_mix }}</textarea>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
+                        <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang }}</p>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Accuracy:</label>
-                        <select name="acc_mix" class="form-select">
-                            <option value="3" {% if anno.acc_m == 3 %}selected{% endif %}>3 — Accurate</option>
-                            <option value="2" {% if anno.acc_m == 2 %}selected{% endif %}>2 — Less Accurate</option>
-                            <option value="1" {% if anno.acc_m == 1 %}selected{% endif %}>1 — Inaccurate</option>
-                        </select>
+                    <!-- Pertanyaan Perlu Perbaikan? -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" {% if not anno.rev_mix %}checked{% endif %} required>
+                            <label class="form-check-label" for="rev_mix_no">Tidak (Sudah Bagus)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes" {% if anno.rev_mix %}checked{% endif %} required>
+                            <label class="form-check-label" for="rev_mix_yes">Ya (Perlu Perbaikan)</label>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Acceptability:</label>
-                        <select name="accept_mix" class="form-select">
-                            <option value="3" {% if anno.cep_m == 3 %}selected{% endif %}>3 — Acceptable</option>
-                            <option value="2" {% if anno.cep_m == 2 %}selected{% endif %}>2 — Less Acceptable</option>
-                            <option value="1" {% if anno.cep_m == 1 %}selected{% endif %}>1 — Not Acceptable</option>
-                        </select>
+                    <!-- Kolom Teks Revisi (Muncul jika 'Ya') -->
+                    <div id="container_rev_mix" class="mb-4 {% if not anno.rev_mix %}d-none{% endif %}">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
+                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_mix or '' }}</textarea>
                     </div>
 
+                    <hr>
+                    <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
+
+                    <!-- ACCURACY -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Readability:</label>
-                        <select name="read_mix" class="form-select">
-                            <option value="3" {% if anno.rea_m == 3 %}selected{% endif %}>3 — Readable</option>
-                            <option value="2" {% if anno.rea_m == 2 %}selected{% endif %}>2 — Less Readable</option>
-                            <option value="1" {% if anno.rea_m == 1 %}selected{% endif %}>1 — Not Readable</option>
-                        </select>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" {% if anno.acc_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="2" {% if anno.acc_m == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="1" {% if anno.acc_m == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
+                    </div>
+
+                    <!-- ACCEPTABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" {% if anno.cep_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="2" {% if anno.cep_m == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="1" {% if anno.cep_m == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Acceptable</label></div>
+                    </div>
+
+                    <!-- READABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" {% if anno.rea_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="2" {% if anno.rea_m == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="1" {% if anno.rea_m == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
                 </div>
             </div>
@@ -106,5 +149,58 @@
             </div>
         </form>
     </div>
+
+    <script>
+        // Toggle kotak teks revisi Full
+        document.querySelectorAll('.need-rev-full').forEach(radio => {
+            radio.addEventListener('change', function() {
+                let container = document.getElementById('container_rev_full');
+                let textarea = document.getElementById('rev_full');
+                if (this.value === 'yes') {
+                    container.classList.remove('d-none');
+                    textarea.required = true;
+                } else {
+                    container.classList.add('d-none');
+                    textarea.required = false;
+                    textarea.value = '';
+                }
+            });
+        });
+
+        // Toggle kotak teks revisi Mix
+        document.querySelectorAll('.need-rev-mix').forEach(radio => {
+            radio.addEventListener('change', function() {
+                let container = document.getElementById('container_rev_mix');
+                let textarea = document.getElementById('rev_mix');
+                if (this.value === 'yes') {
+                    container.classList.remove('d-none');
+                    textarea.required = true;
+                } else {
+                    container.classList.add('d-none');
+                    textarea.required = false;
+                    textarea.value = '';
+                }
+            });
+        });
+
+        // Validasi submit edit
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            let needFull = document.querySelector('input[name="need_rev_full"]:checked').value;
+            let revFullVal = document.getElementById('rev_full').value.trim();
+            if (needFull === 'yes' && !revFullVal) {
+                alert('⚠️ Mohon isi teks revisi pada Terjemahan Full!');
+                e.preventDefault();
+                return false;
+            }
+
+            let needMix = document.querySelector('input[name="need_rev_mix"]:checked').value;
+            let revMixVal = document.getElementById('rev_mix').value.trim();
+            if (needMix === 'yes' && !revMixVal) {
+                alert('⚠️ Mohon isi teks revisi pada Terjemahan Code-Mixed!');
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
 </body>
 </html>
