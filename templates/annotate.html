@@ -25,7 +25,8 @@
                 <h5 class="card-title text-info">📌 Petunjuk Anotasi</h5>
                 <p class="card-text small text-muted mb-0">
                     1. Tentukan apakah terjemahan memerlukan perbaikan.<br>
-                    2. Jika <strong>Ya</strong>, ketik teks revisinya, lalu berikan penilaian kualitas (Accuracy, Acceptability, Readability).
+                    2. Jika memilih <strong>Ya</strong>, wajib mengetik teks revisi.<br>
+                    3. Semua aspek penilaian (Accuracy, Acceptability, Readability) wajib dipilih.
                 </p>
             </div>
         </div>
@@ -51,48 +52,48 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
                     </div>
 
-                    <!-- Pertanyaan Awal: Perlu Perbaikan? -->
+                    <!-- Pertanyaan Awal: Perlu Perbaikan? (Tanpa checked default) -->
                     <div class="mb-4 p-3 bg-white border rounded">
-                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan?</label>
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" checked>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" required>
                             <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes">
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" required>
                             <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <!-- Kolom Teks Revisi (Hidden by default, muncul jika pilih 'Ya') -->
+                    <!-- Kolom Teks Revisi (Hidden by default) -->
                     <div id="container_rev_full" class="mb-4 d-none">
-                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan:</label>
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
                         <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
                     </div>
 
                     <hr>
                     <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
 
-                    <!-- 1. ACCURACY -->
+                    <!-- 1. ACCURACY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" required checked><label class="form-check-label">3 — Accurate</label></div>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" required><label class="form-check-label">3 — Accurate</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="2"><label class="form-check-label">2 — Less Accurate</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
-                    <!-- 2. ACCEPTABILITY -->
+                    <!-- 2. ACCEPTABILITY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" required checked><label class="form-check-label">3 — Acceptable</label></div>
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" required><label class="form-check-label">3 — Acceptable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="2"><label class="form-check-label">2 — Less Acceptable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
-                    <!-- 3. READABILITY -->
+                    <!-- 3. READABILITY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" required checked><label class="form-check-label">3 — Readable</label></div>
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" required><label class="form-check-label">3 — Readable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="2"><label class="form-check-label">2 — Less Readable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="1"><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
@@ -110,48 +111,48 @@
                         <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</p>
                     </div>
 
-                    <!-- Pertanyaan Awal: Perlu Perbaikan? -->
+                    <!-- Pertanyaan Awal: Perlu Perbaikan? (Tanpa checked default) -->
                     <div class="mb-4 p-3 bg-white border rounded">
-                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan?</label>
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" checked>
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" required>
                             <label class="form-check-label" for="rev_mix_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes" required>
                             <label class="form-check-label" for="rev_mix_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <!-- Kolom Teks Revisi (Hidden by default, muncul jika pilih 'Ya') -->
+                    <!-- Kolom Teks Revisi (Hidden by default) -->
                     <div id="container_rev_mix" class="mb-4 d-none">
-                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan:</label>
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi/Perbaikan: <span class="text-danger">*</span></label>
                         <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
                     </div>
 
                     <hr>
                     <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
 
-                    <!-- 1. ACCURACY -->
+                    <!-- 1. ACCURACY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" required checked><label class="form-check-label">3 — Accurate</label></div>
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" required><label class="form-check-label">3 — Accurate</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="2"><label class="form-check-label">2 — Less Accurate</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
-                    <!-- 2. ACCEPTABILITY -->
+                    <!-- 2. ACCEPTABILITY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" required checked><label class="form-check-label">3 — Acceptable</label></div>
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" required><label class="form-check-label">3 — Acceptable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="2"><label class="form-check-label">2 — Less Acceptable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
-                    <!-- 3. READABILITY -->
+                    <!-- 3. READABILITY (Tanpa checked default) -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman)</label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" required checked><label class="form-check-label">3 — Readable</label></div>
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" required><label class="form-check-label">3 — Readable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="2"><label class="form-check-label">2 — Less Readable</label></div>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="1"><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
@@ -195,25 +196,6 @@
                     textarea.value = '';
                 }
             });
-        });
-
-        // Validasi final sebelum submit
-        document.getElementById('annotationForm').addEventListener('submit', function(e) {
-            let needFull = document.querySelector('input[name="need_rev_full"]:checked').value;
-            let revFullVal = document.getElementById('rev_full').value.trim();
-            if (needFull === 'yes' && !revFullVal) {
-                alert('⚠️ Mohon isi teks revisi pada Terjemahan Full!');
-                e.preventDefault();
-                return false;
-            }
-
-            let needMix = document.querySelector('input[name="need_rev_mix"]:checked').value;
-            let revMixVal = document.getElementById('rev_mix').value.trim();
-            if (needMix === 'yes' && !revMixVal) {
-                alert('⚠️ Mohon isi teks revisi pada Terjemahan Code-Mixed!');
-                e.preventDefault();
-                return false;
-            }
         });
     </script>
 </body>
