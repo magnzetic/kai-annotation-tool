@@ -106,73 +106,83 @@
             });
         });
 
+        // Script Word Tagger Code-Mixed dengan pengaman anti-hang
         const textElem = document.getElementById('targetTextMix');
         const container = document.getElementById('bubbleContainerMix');
         const hiddenInput = document.getElementById('word_tags_mix_input');
         
-        const words = textElem.innerText.trim().split(/\s+/);
-        let savedTags = [];
-        try {
-            savedTags = JSON.parse('{{ anno.word_tags_mix | safe }}' || '[]');
-        } catch(e) { savedTags = []; }
+        if (textElem && container) {
+            const words = textElem.innerText.trim().split(/\s+/);
+            let savedTags = [];
+            
+            try {
+                let rawJson = '{{ anno.word_tags_mix | safe }}';
+                if (rawJson && rawJson !== 'None' && rawJson !== '') {
+                    savedTags = JSON.parse(rawJson);
+                }
+            } catch(e) { 
+                console.warn("Gagal parse JSON tag mix, menggunakan default kosong:", e);
+                savedTags = []; 
+            }
 
-        let wordTags = words.map((w, idx) => ({
-            word: w,
-            lang: (savedTags[idx] && savedTags[idx].lang) ? savedTags[idx].lang : ""
-        }));
+            let wordTags = words.map((w, idx) => ({
+                word: w,
+                lang: (savedTags[idx] && savedTags[idx].lang) ? savedTags[idx].lang : ""
+            }));
 
-        function render() {
-            container.innerHTML = '';
-            words.forEach((word, index) => {
-                let box = document.createElement('div');
-                box.className = "p-2 bg-white border rounded shadow-sm text-center";
-                box.style.minWidth = "120px";
+            function render() {
+                container.innerHTML = '';
+                words.forEach((word, index) => {
+                    let box = document.createElement('div');
+                    box.className = "p-2 bg-white border rounded shadow-sm text-center";
+                    box.style.minWidth = "120px";
 
-                let label = document.createElement('div');
-                label.innerText = word;
-                label.className = "fw-bold mb-1 text-success small";
+                    let label = document.createElement('div');
+                    label.innerText = word;
+                    label.className = "fw-bold mb-1 text-success small";
 
-                let select = document.createElement('select');
-                select.className = "form-select form-select-sm";
-                select.required = true;
+                    let select = document.createElement('select');
+                    select.className = "form-select form-select-sm";
+                    select.required = true;
 
-                let optDefault = document.createElement('option');
-                optDefault.value = "";
-                optDefault.innerText = "-- Pilih --";
-                optDefault.disabled = true;
-                optDefault.selected = (wordTags[index].lang === "");
-                select.appendChild(optDefault);
+                    let optDefault = document.createElement('option');
+                    optDefault.value = "";
+                    optDefault.innerText = "-- Pilih --";
+                    optDefault.disabled = true;
+                    optDefault.selected = (wordTags[index].lang === "");
+                    select.appendChild(optDefault);
 
-                let optIndo = document.createElement('option');
-                optIndo.value = "Indonesia";
-                optIndo.innerText = "Indonesia";
-                optIndo.selected = (wordTags[index].lang === "Indonesia");
-                select.appendChild(optIndo);
+                    let optIndo = document.createElement('option');
+                    optIndo.value = "Indonesia";
+                    optIndo.innerText = "Indonesia";
+                    optIndo.selected = (wordTags[index].lang === "Indonesia");
+                    select.appendChild(optIndo);
 
-                let optLocal = document.createElement('option');
-                optLocal.value = userRole;
-                optLocal.innerText = userRole;
-                optLocal.selected = (wordTags[index].lang === userRole);
-                select.appendChild(optLocal);
+                    let optLocal = document.createElement('option');
+                    optLocal.value = userRole;
+                    optLocal.innerText = userRole;
+                    optLocal.selected = (wordTags[index].lang === userRole);
+                    select.appendChild(optLocal);
 
-                let optOther = document.createElement('option');
-                optOther.value = "Lainnya";
-                optOther.innerText = "Lainnya";
-                optOther.selected = (wordTags[index].lang === "Lainnya");
-                select.appendChild(optOther);
+                    let optOther = document.createElement('option');
+                    optOther.value = "Lainnya";
+                    optOther.innerText = "Lainnya";
+                    optOther.selected = (wordTags[index].lang === "Lainnya");
+                    select.appendChild(optOther);
 
-                select.onchange = (e) => {
-                    wordTags[index].lang = e.target.value;
-                    hiddenInput.value = JSON.stringify(wordTags);
-                };
+                    select.onchange = (e) => {
+                        wordTags[index].lang = e.target.value;
+                        hiddenInput.value = JSON.stringify(wordTags);
+                    };
 
-                box.appendChild(label);
-                box.appendChild(select);
-                container.appendChild(box);
-            });
-            hiddenInput.value = JSON.stringify(wordTags);
+                    box.appendChild(label);
+                    box.appendChild(select);
+                    container.appendChild(box);
+                });
+                hiddenInput.value = JSON.stringify(wordTags);
+            }
+            render();
         }
-        render();
     </script>
 </body>
 </html>
