@@ -207,15 +207,25 @@ def submit_monolingual(review_id):
 def transition_codemixed():
     return render_template('transition_mix.html')
 
-# --- FASE 2: CODE-MIXED & WORD LEVEL TAGGING ---
+# --- FASE 2: CODE-MIXED (DIPROTEKSI: WAJIB SELESAIKAN 1000 MONOLINGUAL DULU) ---
 @app.route('/annotate/codemixed')
 @login_required
 def annotate_codemixed():
+    # 1. Cek berapa banyak data Monolingual yang sudah diselesaikan oleh user ini
+    done_mono_count = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    
+    # 2. REM DARURAT: Jika Monolingual belum genap 1000, TOLAK dan lempar balik ke Monolingual!
+    if done_mono_count < 1000:
+        flash(f'⚠️ Anda harus menyelesaikan 1000 data Monolingual terlebih dahulu! (Progress saat ini: {done_mono_count}/1000)', 'warning')
+        return redirect(url_for('annotate_monolingual'))
+
+    # 3. Jika sudah 1000, lanjut cek progress Code-Mixed
     done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
     done_mix_ids = [r[0] for r in done_mix_ids]
     
     item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
     
+    # Jika sesi Code-Mixed sudah selesai 1000 data, arahkan ke halaman finish.html
     if not item or Review.query.filter(Review.id.in_(done_mix_ids)).count() >= 1000:
         return render_template('finish.html')
         
