@@ -102,9 +102,19 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Hitung total dan progress per fase
+    total_mono = 1000
     done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    
+    total_mix = 1000
     done_mix = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).count()
-    return render_template('dashboard.html', done_mono=done_mono, done_mix=done_mix)
+    
+    percent_mono = round((done_mono / total_mono) * 100, 1) if total_mono > 0 else 0
+    percent_mix = round((done_mix / total_mix) * 100, 1) if total_mix > 0 else 0
+    
+    return render_template('dashboard.html', 
+                           total_mono=total_mono, done_mono=done_mono, percent_mono=percent_mono,
+                           total_mix=total_mix, done_mix=done_mix, percent_mix=percent_mix)
 
 @app.route('/history')
 @login_required
