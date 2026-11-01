@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Anotasi Code-Mixed - KAI Annotation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <span class="badge bg-success mb-1">Fase 2: Code-Mixed & Word Tagging</span>
+                <h4 class="mb-0">Review ID: #{{ item.id }}</h4>
+                <small class="text-muted">Annotator: {{ current_user.username }} (Role: {{ current_user.role | capitalize }})</small>
+            </div>
+            <div>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-secondary btn-sm me-2">📋 Riwayat & Edit</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">← Dashboard</a>
+            </div>
+        </div>
+
+        <!-- PETUNJUK -->
+        <div class="card mb-4 shadow-sm border-success">
+            <div class="card-body bg-white">
+                <h5 class="card-title text-success">📌 Petunjuk Anotasi Code-Mixed</h5>
+                <p class="card-text small text-muted mb-0">
+                    1. Evaluasi teks campuran (Code-Mixed) serta lengkapi metadata bahasa (Bahasa dominan, hitung kata).<br>
+                    2. Lakukan <strong>Word-Level Tagging</strong> pada tiap kata dengan mengeklik *bubble* kata.<br>
+                    3. Pastikan seluruh pertanyaan wajib terisi.
+                </p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('submit_codemixed', review_id=item.id) }}" method="POST">
+            <!-- ORIGINAL -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">Review Asli (Indonesia)</div>
+                <div class="card-body">
+                    <p class="fs-5 mb-0"><strong>"{{ item.content }}"</strong></p>
+                </div>
+            </div>
+
+            <!-- TERJEMAHAN CODE-MIXED -->
+            <div class="card mb-4 shadow-sm border-success">
+                <div class="card-header bg-success text-white fw-bold">
+                    Terjemahan Code-Mixed ({{ 'Indo-Jawa' if role == 'jawa' else 'Indo-Palembang' }})
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
+                        <p id="targetTextMix" class="p-3 bg-light rounded fs-5 border">{{ item.trans_mix_jawa if role == 'jawa' else item.trans_mix_palembang }}</p>
+                    </div>
+
+                    <!-- WORD LEVEL TAGGING BUBBLE SYSTEM -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging (Klik kata untuk mengubah label bahasa):</label>
+                        <div id="bubbleContainerMix" class="d-flex flex-wrap gap-2 p-3 bg-light border rounded">
+                            <!-- Kata-kata akan di-generate otomatis oleh JavaScript -->
+                        </div>
+                        <input type="hidden" name="word_tags_mix" id="word_tags_mix">
+                    </div>
+
+                    <!-- PERTANYAAN TAMBAHAN CODE-MIXED -->
+                    <div class="row g-3 mb-4 p-3 bg-white border rounded">
+                        <h6 class="fw-bold text-success">Analisis Struktur Bahasa:</h6>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Bahasa Dominan dalam Teks: <span class="text-danger">*</span></label>
+                            <select name="dominant_lang" class="form-select" required>
+                                <option value="">-- Pilih Bahasa Dominan --</option>
+                                <option value="Indonesia">Bahasa Indonesia</option>
+                                <option value="Daerah">Bahasa Daerah (Jawa/Palembang)</option>
+                                <option value="Seimbang">Seimbang / Keduanya</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Jumlah Kata Daerah: <span class="text-danger">*</span></label>
+                            <input type="number" name="count_local" class="form-control" min="0" required placeholder="0">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Jumlah Kata Indonesia: <span class="text-danger">*</span></label>
+                            <input type="number" name="count_indog" class="form-control" min="0" required placeholder="0">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Apakah ada bahasa asing/lain selain Indonesia & Daerah? (Isi '-' jika tidak ada)</label>
+                            <input type="text" name="other_langs" class="form-control" value="-" required>
+                        </div>
+                    </div>
+
+                    <!-- PERLU PERBAIKAN -->
+                    <div class="mb-4 p-3 bg-white border rounded">
+                        <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_no" value="no" required>
+                            <label class="form-check-label" for="rev_mix_no">Tidak (Sudah Bagus)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input need-rev-mix" type="radio" name="need_rev_mix" id="rev_mix_yes" value="yes" required>
+                            <label class="form-check-label" for="rev_mix_yes">Ya (Perlu Perbaikan)</label>
+                        </div>
+                    </div>
+
+                    <!-- REVISI TEXT -->
+                    <div id="container_rev_mix" class="mb-4 d-none">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi: <span class="text-danger">*</span></label>
+                        <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
+                    </div>
+
+                    <hr>
+                    <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
+
+                    <!-- ACCURACY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" required><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="2"><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
+                    </div>
+
+                    <!-- ACCEPTABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" required><label class="form-check-label">3 — Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="2"><label class="form-check-label">2 — Less Acceptable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
+                    </div>
+
+                    <!-- READABILITY -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" required><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="2"><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="1"><label class="form-check-label">1 — Not Readable</label></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow">Kirim Anotasi Code-Mixed</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Toggle Revisi
+        document.querySelectorAll('.need-rev-mix').forEach(radio => {
+            radio.addEventListener('change', function() {
+                let container = document.getElementById('container_rev_mix');
+                let textarea = document.getElementById('rev_mix');
+                if (this.value === 'yes') {
+                    container.classList.remove('d-none');
+                    textarea.required = true;
+                } else {
+                    container.classList.add('d-none');
+                    textarea.required = false;
+                    textarea.value = '';
+                }
+            });
+        });
+
+        // Script Interaktif Word-Level Tagging (Bubble System) untuk Code-Mixed
+        const textElemMix = document.getElementById('targetTextMix');
+        const containerMix = document.getElementById('bubbleContainerMix');
+        const hiddenInputMix = document.getElementById('word_tags_mix');
+        
+        const wordsMix = textElemMix.innerText.trim().split(/\s+/);
+        let tagsMix = wordsMix.map(w => ({ word: w, lang: 'Indonesia' })); // Default label
+
+        function renderBubblesMix() {
+            containerMix.innerHTML = '';
+            wordsMix.forEach((word, idx) => {
+                let badge = document.createElement('span');
+                badge.innerText = word + ` (${tagsMix[idx].lang})`;
+                badge.className = "badge p-2 cursor-pointer user-select-none ";
+                
+                if(tagsMix[idx].lang === 'Indonesia') badge.classList.add('bg-primary');
+                else if(tagsMix[idx].lang === 'Daerah') badge.classList.add('bg-success');
+                else badge.classList.add('bg-warning', 'text-dark');
+
+                badge.onclick = () => {
+                    if(tagsMix[idx].lang === 'Indonesia') tagsMix[idx].lang = 'Daerah';
+                    else if(tagsMix[idx].lang === 'Daerah') tagsMix[idx].lang = 'Lainnya';
+                    else tagsMix[idx].lang = 'Indonesia';
+                    
+                    hiddenInputMix.value = JSON.stringify(tagsMix);
+                    renderBubblesMix();
+                };
+                containerMix.appendChild(badge);
+            });
+            hiddenInputMix.value = JSON.stringify(tagsMix);
+        }
+        renderBubblesMix();
+    </script>
+</body>
+</html>
