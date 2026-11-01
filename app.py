@@ -161,8 +161,11 @@ def edit_codemixed(annotation_id):
 @app.route('/annotate')
 @login_required
 def annotate():
-    # Langsung arahkan ke code-mixed kalau mau langsung tes halaman code-mixed
-    return redirect(url_for('annotate_codemixed'))
+    done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    if done_mono < 1000:
+        return redirect(url_for('annotate_monolingual'))
+    else:
+        return redirect(url_for('annotate_codemixed'))
 
 @app.route('/annotate/monolingual')
 @login_required
@@ -205,13 +208,18 @@ def transition_codemixed():
 @app.route('/annotate/codemixed')
 @login_required
 def annotate_codemixed():
-    # SYARAT 1000 DATA DI-BYPASS TOTAL SUPAYA LANGSUNG BUKA
+    done_mono_count = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    if done_mono_count < 1000:
+        flash('⚠️ Anda harus menyelesaikan 1000 data Monolingual terlebih dahulu!', 'warning')
+        return redirect(url_for('annotate_monolingual'))
+
+    done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
+    done_mix_ids = [r[0] for r in done_mix_ids]
     
-    # Ambil data review pertama yang ada di database (buat testing)
-    item = Review.query.order_by(Review.id.asc()).first()
+    item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
     
-    if not item:
-        return "Belum ada data review di database! Silakan masukkan data review terlebih dahulu."
+    if not item or Review.query.filter(Review.id.in_(done_mix_ids)).count() >= 1000:
+        return render_template('finish.html')
         
     user_role = current_user.role
     return render_template('annotate_mix.html', item=item, role=user_role)
