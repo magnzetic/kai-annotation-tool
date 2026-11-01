@@ -16,7 +16,6 @@
         </div>
 
         <form action="{{ url_for('edit_codemixed', annotation_id=anno.id) }}" method="POST">
-            <!-- REVIEW ASLI -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white fw-bold">Review Asli (Indonesia)</div>
                 <div class="card-body">
@@ -24,7 +23,6 @@
                 </div>
             </div>
 
-            <!-- TERJEMAHAN CODE-MIXED -->
             <div class="card mb-4 shadow-sm border-success">
                 <div class="card-header bg-success text-white fw-bold">
                     Terjemahan Code-Mixed (Indo-{{ current_user.role | capitalize }})
@@ -35,14 +33,12 @@
                         <p id="targetTextMix" class="p-3 bg-light rounded fs-5 border">{{ review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang }}</p>
                     </div>
 
-                    <!-- WORD LEVEL TAGGING -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging Code-Mixed: <span class="text-danger">*</span></label>
                         <div id="bubbleContainerMix" class="p-3 bg-light border rounded d-flex flex-wrap gap-3"></div>
                         <input type="hidden" name="word_tags_json" id="word_tags_mix_input">
                     </div>
 
-                    <!-- PERLU PERBAIKAN -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
@@ -55,7 +51,7 @@
                         </div>
                     </div>
 
-                    <div id="container_rev_mix" class="mb-4 {% if not anno.rev_mix %}d-none{% endif %}">
+                    <div id="container_rev_mix" class="mb-4 {% if not anno.rev_mix or anno.rev_mix == "" %}d-none{% endif %}">
                         <label class="form-label fw-bold text-danger">✍️ Teks Revisi: <span class="text-danger">*</span></label>
                         <textarea id="rev_mix" name="rev_mix" class="form-control" rows="2">{{ anno.rev_mix }}</textarea>
                     </div>
@@ -63,7 +59,6 @@
                     <hr>
                     <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas Code-Mixed:</h6>
 
-                    <!-- ACCURACY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="3" {% if anno.acc_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
@@ -71,7 +66,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_mix" value="1" {% if anno.acc_m == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
-                    <!-- ACCEPTABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">2. Acceptability (Kewajaran Code-Mixing) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="3" {% if anno.cep_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Acceptable</label></div>
@@ -79,7 +73,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_mix" value="1" {% if anno.cep_m == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
-                    <!-- READABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_mix" value="3" {% if anno.rea_m == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
@@ -108,11 +101,11 @@
                 } else {
                     container.classList.add('d-none');
                     textarea.required = false;
+                    textarea.value = '';
                 }
             });
         });
 
-        // Script Word Tagger Code-Mixed dengan load data sebelumnya
         const textElem = document.getElementById('targetTextMix');
         const container = document.getElementById('bubbleContainerMix');
         const hiddenInput = document.getElementById('word_tags_mix_input');
