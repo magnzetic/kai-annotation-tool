@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selesai - Anotasi KAI Access</title>
+    <!-- Tailwind CSS CDN untuk styling yang bersih dan cepat -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-emerald-100">
+        <!-- Ikon Sukses / Centang -->
+        <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+
+        <!-- Judul & Ucapan Terima Kasih -->
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Terima Kasih Banyak! 🎉</h1>
+        <p class="text-gray-600 text-sm mb-6 leading-relaxed">
+            Luar biasa! Anda telah berhasil menyelesaikan seluruh target <strong>1.000 data anotasi</strong> dengan sangat baik. Kontribusi Anda sangat berharga untuk penelitian ini.
+        </p>
+
+        <!-- Informasi Tambahan -->
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-xs text-gray-500 border border-gray-100">
+            <p>💡 Ingin meninjau atau merevisi jawaban sebelumnya? Anda tetap dapat mengakses dan mengedit riwayat anotasi melalui menu Riwayat.</p>
+        </div>
+
+        <!-- Tombol Navigasi -->
+        <div class="space-y-3">
+            <a href="{{ url_for('history') }}" class="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-xl transition duration-200 shadow-md hover:shadow-lg">
+                Lihat / Edit Riwayat Anotasi
+            </a>
+            <a href="{{ url_for('logout') }}" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition duration-200">
+                Keluar (Logout)
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
