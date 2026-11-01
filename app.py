@@ -10,7 +10,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
 db_url = os.getenv('DATABASE_URL')
 
-
 if db_url:
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
@@ -94,7 +93,8 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    total = Review.query.count()
+    # Target total selalu 1000 untuk setiap annotator
+    total = 1000
     done = Annotation.query.filter_by(user_id=current_user.id).count()
     percent = round((done / total) * 100, 1) if total > 0 else 0
     
@@ -133,7 +133,8 @@ def edit_annotation(annotation_id):
         db.session.commit()
         return redirect(url_for('history'))
         
-    return render_template('edit_annotate.html', anno=anno, review=review)
+    user_role = current_user.role
+    return render_template('edit_annotate.html', anno=anno, review=review, role=user_role)
 
 @app.route('/annotate')
 @login_required
@@ -141,9 +142,11 @@ def annotate():
     done_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id).all()
     done_ids = [r[0] for r in done_ids]
     
+    # Ambil data review yang belum dikerjakan oleh user ini, batasi dari 1000 data pertama
     item = Review.query.filter(~Review.id.in_(done_ids)).order_by(Review.id.asc()).first()
     
-    if not item:
+    # Jika sudah selesai 1000 data, arahkan ke halaman penutup (finish.html / thank you)
+    if not item or Review.query.filter(Review.id.in_(done_ids)).count() >= 1000:
         return render_template('finish.html')
         
     user_role = current_user.role
@@ -161,24 +164,41 @@ def annotate_by_id(review_id):
 def submit(review_id):
     review = Review.query.get_or_404(review_id)
     
-    new_anno = Annotation(
-        review_id=review_id,
-        user_id=current_user.id,
-        acc_f=request.form.get('acc_full', type=int),
-        cep_f=request.form.get('accept_full', type=int),
-        rea_f=request.form.get('read_full', type=int),
-        rev_full=request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang),
+    # Cek apakah sudah pernah menganotasi review ini sebelumnya
+    existing_anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
+    
+    if existing_anno:
+        # Jika sudah ada, update datanya
+        existing_anno.acc_f = request.form.get('acc_full', type=int)
+        existing_anno.cep_f = request.form.get('accept_full', type=int)
+        existing_anno.rea_f = request.form.get('read_full', type=int)
+        existing_anno.rev_full = request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang)
         
-        acc_m=request.form.get('acc_mix', type=int),
-        cep_m=request.form.get('accept_mix', type=int),
-        rea_m=request.form.get('read_mix', type=int),
-        rev_mix=request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
-    )
-    db.session.add(new_anno)
+        existing_anno.acc_m = request.form.get('acc_mix', type=int)
+        existing_anno.cep_m = request.form.get('accept_mix', type=int)
+        existing_anno.rea_m = request.form.get('read_mix', type=int)
+        existing_anno.rev_mix = request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
+    else:
+        # Jika belum, buat baru
+        new_anno = Annotation(
+            review_id=review_id,
+            user_id=current_user.id,
+            acc_f=request.form.get('acc_full', type=int),
+            cep_f=request.form.get('accept_full', type=int),
+            rea_f=request.form.get('read_full', type=int),
+            rev_full=request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang),
+            
+            acc_m=request.form.get('acc_mix', type=int),
+            cep_m=request.form.get('accept_mix', type=int),
+            rea_m=request.form.get('read_mix', type=int),
+            rev_mix=request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
+        )
+        db.session.add(new_anno)
+        
     db.session.commit()
     return redirect(url_for('annotate'))
 
-# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV (DIPROTEKSI MAKSIMAL 1000 DATA) ---
+# --- OTOMATIS INISIALISASI DATABASE KUNCI PAS 1000 ---
 with app.app_context():
     db.create_all()
     
@@ -195,18 +215,15 @@ with app.app_context():
             db.session.commit()
             print("✅ User default berhasil dibuat!")
 
-    # 2. Import CSV DENGAN PEMBATAS MUTLAK MAKSIMAL 1000 BARIS
+    # 2. Import CSV dikunci mutlak tepat 1000 baris pertama saja
     total_reviews = Review.query.count()
     if total_reviews < 1000:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, 'dataset_website.csv')
         
         if os.path.exists(csv_path):
-            # Baca CSV dan AMBIL PAS 1000 BARIS PERTAMA SAJA (Rem Darurat)
             df = pd.read_csv(csv_path).fillna('').head(1000)
-            print(f"📦 Mengamankan import tepat {len(df)} data review...")
             
-            # Hitung berapa kekurangan data jika sudah ada beberapa terlanjur masuk
             needed = 1000 - total_reviews
             df_to_insert = df.tail(needed) if total_reviews > 0 else df
             
@@ -226,11 +243,9 @@ with app.app_context():
                 db.session.add(rev)
             
             db.session.commit()
-            print(f"✅ Selesai! Total review dikunci di angka: {Review.query.count()}")
+            print(f"✅ Selesai! Total review dikunci tepat di angka 1000.")
         else:
             print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
-    else:
-        print(f"ℹ️ Database sudah lengkap ({total_reviews} data), import dihentikan.")
 
 if __name__ == '__main__':
     app.run(debug=True)
