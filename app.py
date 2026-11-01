@@ -136,7 +136,7 @@ def edit_annotation(annotation_id):
         anno.acc_m = request.form.get('acc_mix', type=int)
         anno.cep_m = request.form.get('accept_mix', type=int)
         anno.rea_m = request.form.get('read_mix', type=int)
-        anno.word_tags_mix = request.form.get('word_tags_json', '')
+        anno.word_tags_mix = request.form.get('word_tags_mix_json', '') # Tangkap dari input mix di edit
         
         db.session.commit()
         return redirect(url_for('history'))
