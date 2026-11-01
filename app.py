@@ -6,6 +6,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
 db_url = os.getenv('DATABASE_URL')
