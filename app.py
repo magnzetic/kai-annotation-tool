@@ -180,7 +180,7 @@ def submit(review_id):
 # --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP ---
 with app.app_context():
     db.create_all()
-    
+
     # 1. Buat User otomatis jika tabel user masih kosong
     if User.query.count() == 0:
         users_config = os.getenv('USERS_CONFIG')
@@ -194,43 +194,31 @@ with app.app_context():
             db.session.commit()
             print("✅ User default berhasil dibuat!")
 
-    # 2. Import CSV otomatis dengan proteksi aman
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(base_dir, 'dataset_website.csv')
-    
-    if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path).fillna('')
-        # Hanya masukkan jika jumlah di database kurang dari jumlah CSV
-        if Review.query.count() < len(df):
+    # 2. Import CSV otomatis jika tabel review masih kosong
+    if Review.query.count() == 0:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'dataset_website.csv')
+
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path).fillna('')
             for _, row in df.iterrows():
-                content_text = row.get('content', '')
-                if content_text:
-                    # Cek apakah sudah ada di DB sebelum di-add
-                    exists = Review.query.filter_by(content=content_text).first()
-                    if not exists:
-                        rev = Review(
-                            content=content_text,
-                            performa=row.get('Performa', ''),
-                            tampilan=row.get('Tampilan', ''),
-                            tiket=row.get('Tiket', ''),
-                            pembayaran=row.get('Pembayaran', ''),
-                            akun=row.get('Akun', ''),
-                            trans_jawa=row.get('trans_jawa', ''),
-                            trans_mix_jawa=row.get('trans_mix_jawa', ''),
-                            trans_palembang=row.get('trans_palembang', ''),
-                            trans_mix_palembang=row.get('trans_mix_palembang', '')
-                        )
-                        db.session.add(rev)
-            try:
-                db.session.commit()
-                print(f"📦 Berhasil menyinkronkan data review!")
-            except Exception as e:
-                db.session.rollback()
-                print(f"⚠️ Terdeteksi duplikat, dibatalkan: {e}")
+                rev = Review(
+                    content=row.get('content', ''),
+                    performa=row.get('Performa', ''),
+                    tampilan=row.get('Tampilan', ''),
+                    tiket=row.get('Tiket', ''),
+                    pembayaran=row.get('Pembayaran', ''),
+                    akun=row.get('Akun', ''),
+                    trans_jawa=row.get('trans_jawa', ''),
+                    trans_mix_jawa=row.get('trans_mix_jawa', ''),
+                    trans_palembang=row.get('trans_palembang', ''),
+                    trans_mix_palembang=row.get('trans_mix_palembang', '')
+                )
+                db.session.add(rev)
+            db.session.commit()
+            print(f"📦 Berhasil mengimport {len(df)} data review dari CSV!")
         else:
-            print(f"ℹ️ Data review di database sudah lengkap.")
-    else:
-        print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
+            print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
 
 if __name__ == '__main__':
     app.run(debug=True)
