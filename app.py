@@ -60,14 +60,14 @@ class Annotation(db.Model):
     cep_f = db.Column(db.Integer)
     rea_f = db.Column(db.Integer)
     rev_full = db.Column(db.Text)
-    word_tags_mono = db.Column(db.Text)  # JSON Word-level tagging Mono
+    word_tags_mono = db.Column(db.Text)
     
-    # Fase 2: Code-Mixed (Hanya Kualitas & Word-Level Tagging)
+    # Fase 2: Code-Mixed
     acc_m = db.Column(db.Integer)
     cep_m = db.Column(db.Integer)
     rea_m = db.Column(db.Integer)
     rev_mix = db.Column(db.Text)
-    word_tags_mix = db.Column(db.Text)  # JSON Word-level tagging Mix
+    word_tags_mix = db.Column(db.Text)
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -136,7 +136,6 @@ def edit_monolingual(annotation_id):
     user_role = current_user.role
     return render_template('edit_mono.html', anno=anno, review=review, role=user_role)
 
-
 @app.route('/edit/codemixed/<int:annotation_id>', methods=['GET', 'POST'])
 @login_required
 def edit_codemixed(annotation_id):
@@ -168,7 +167,6 @@ def annotate():
     else:
         return redirect(url_for('annotate_codemixed'))
 
-# --- FASE 1: MONOLINGUAL ---
 @app.route('/annotate/monolingual')
 @login_required
 def annotate_monolingual():
@@ -202,13 +200,11 @@ def submit_monolingual(review_id):
     db.session.commit()
     return redirect(url_for('annotate_monolingual'))
 
-# --- TRANSISI ---
 @app.route('/transition/codemixed')
 @login_required
 def transition_codemixed():
     return render_template('transition_mix.html')
 
-# --- FASE 2: CODE-MIXED ---
 @app.route('/annotate/codemixed')
 @login_required
 def annotate_codemixed():
@@ -247,7 +243,6 @@ def submit_codemixed(review_id):
     db.session.commit()
     return redirect(url_for('annotate_codemixed'))
 
-# --- DB INIT (DIKUNCI PAS 1000) ---
 with app.app_context():
     db.create_all()
     if User.query.count() == 0:
