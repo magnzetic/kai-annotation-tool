@@ -55,17 +55,25 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # 3 Dimensi Full
+    # --- FASE 1: MONOLINGUAL ---
     acc_f = db.Column(db.Integer)
     cep_f = db.Column(db.Integer)
     rea_f = db.Column(db.Integer)
     rev_full = db.Column(db.Text)
+    word_tags_mono = db.Column(db.Text)  # Menyimpan hasil word-level tagging format JSON/Text untuk Mono
     
-    # 3 Dimensi Mix
+    # --- FASE 2: CODE-MIXED ---
     acc_m = db.Column(db.Integer)
     cep_m = db.Column(db.Integer)
     rea_m = db.Column(db.Integer)
     rev_mix = db.Column(db.Text)
+    
+    # Pertanyaan Tambahan Code-Mixed / Word-Level Tagging Metadata
+    dominant_lang = db.Column(db.String(50))      # Bahasa dominan
+    count_local = db.Column(db.Integer)           # Jumlah kata bahasa daerah
+    count_indog = db.Column(db.Integer)           # Jumlah kata bahasa Indonesia
+    other_langs = db.Column(db.String(100))       # Bahasa lain yg terkandung (jika ada)
+    word_tags_mix = db.Column(db.Text)            # Menyimpan hasil word-level tagging format JSON/Text untuk Mix
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -93,12 +101,9 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Target total selalu 1000 untuk setiap annotator
-    total = 1000
-    done = Annotation.query.filter_by(user_id=current_user.id).count()
-    percent = round((done / total) * 100, 1) if total > 0 else 0
-    
-    return render_template('dashboard.html', total=total, done=done, percent=percent)
+    done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    done_mix = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).count()
+    return render_template('dashboard.html', done_mono=done_mono, done_mix=done_mix)
 
 @app.route('/history')
 @login_required
@@ -116,19 +121,23 @@ def edit_annotation(annotation_id):
     review = Review.query.get(anno.review_id)
     
     if request.method == 'POST':
-        need_rev_full = request.form.get('need_rev_full')
-        anno.rev_full = request.form.get('rev_full') if need_rev_full == 'yes' else ''
-        
+        # Update Monolingual
+        anno.rev_full = request.form.get('rev_full') if request.form.get('need_rev_full') == 'yes' else ''
         anno.acc_f = request.form.get('acc_full', type=int)
         anno.cep_f = request.form.get('accept_full', type=int)
         anno.rea_f = request.form.get('read_full', type=int)
+        anno.word_tags_mono = request.form.get('word_tags_mono', '')
         
-        need_rev_mix = request.form.get('need_rev_mix')
-        anno.rev_mix = request.form.get('rev_mix') if need_rev_mix == 'yes' else ''
-        
+        # Update Code-Mixed & Pertanyaan Tambahan
+        anno.rev_mix = request.form.get('rev_mix') if request.form.get('need_rev_mix') == 'yes' else ''
         anno.acc_m = request.form.get('acc_mix', type=int)
         anno.cep_m = request.form.get('accept_mix', type=int)
         anno.rea_m = request.form.get('read_mix', type=int)
+        anno.dominant_lang = request.form.get('dominant_lang')
+        anno.count_local = request.form.get('count_local', type=int)
+        anno.count_indog = request.form.get('count_indog', type=int)
+        anno.other_langs = request.form.get('other_langs')
+        anno.word_tags_mix = request.form.get('word_tags_mix', '')
         
         db.session.commit()
         return redirect(url_for('history'))
@@ -136,73 +145,89 @@ def edit_annotation(annotation_id):
     user_role = current_user.role
     return render_template('edit_annotate.html', anno=anno, review=review, role=user_role)
 
-@app.route('/annotate')
+# --- FASE 1: MONOLINGUAL ---
+@app.route('/annotate/monolingual')
 @login_required
-def annotate():
-    done_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id).all()
+def annotate_monolingual():
+    done_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).all()
     done_ids = [r[0] for r in done_ids]
     
-    # Ambil data review yang belum dikerjakan oleh user ini, batasi dari 1000 data pertama
     item = Review.query.filter(~Review.id.in_(done_ids)).order_by(Review.id.asc()).first()
     
-    # Jika sudah selesai 1000 data, arahkan ke halaman penutup (finish.html / thank you)
     if not item or Review.query.filter(Review.id.in_(done_ids)).count() >= 1000:
+        return redirect(url_for('transition_codemixed'))
+        
+    user_role = current_user.role
+    return render_template('annotate_mono.html', item=item, role=user_role)
+
+@app.route('/submit/monolingual/<int:review_id>', methods=['POST'])
+@login_required
+def submit_monolingual(review_id):
+    review = Review.query.get_or_404(review_id)
+    
+    anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
+    if not anno:
+        anno = Annotation(review_id=review_id, user_id=current_user.id)
+        db.session.add(anno)
+        
+    anno.acc_f = request.form.get('acc_full', type=int)
+    anno.cep_f = request.form.get('accept_full', type=int)
+    anno.rea_f = request.form.get('read_full', type=int)
+    anno.rev_full = request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang)
+    anno.word_tags_mono = request.form.get('word_tags_mono', '') # Tangkap data word-level tagging
+    
+    db.session.commit()
+    return redirect(url_for('annotate_monolingual'))
+
+# --- TRANSISI ---
+@app.route('/transition/codemixed')
+@login_required
+def transition_codemixed():
+    return render_template('transition_mix.html')
+
+# --- FASE 2: CODE-MIXED & WORD LEVEL TAGGING ---
+@app.route('/annotate/codemixed')
+@login_required
+def annotate_codemixed():
+    done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
+    done_mix_ids = [r[0] for r in done_mix_ids]
+    
+    item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
+    
+    if not item or Review.query.filter(Review.id.in_(done_mix_ids)).count() >= 1000:
         return render_template('finish.html')
         
     user_role = current_user.role
-    return render_template('annotate.html', item=item, role=user_role)
+    return render_template('annotate_mix.html', item=item, role=user_role)
 
-@app.route('/annotate/<int:review_id>')
+@app.route('/submit/codemixed/<int:review_id>', methods=['POST'])
 @login_required
-def annotate_by_id(review_id):
-    item = Review.query.get_or_404(review_id)
-    user_role = current_user.role
-    return render_template('annotate.html', item=item, role=user_role)
-
-@app.route('/submit/<int:review_id>', methods=['POST'])
-@login_required
-def submit(review_id):
+def submit_codemixed(review_id):
     review = Review.query.get_or_404(review_id)
     
-    # Cek apakah sudah pernah menganotasi review ini sebelumnya
-    existing_anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
+    anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
+    if not anno:
+        anno = Annotation(review_id=review_id, user_id=current_user.id)
+        db.session.add(anno)
+        
+    anno.acc_m = request.form.get('acc_mix', type=int)
+    anno.cep_m = request.form.get('accept_mix', type=int)
+    anno.rea_m = request.form.get('read_mix', type=int)
+    anno.rev_mix = request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
     
-    if existing_anno:
-        # Jika sudah ada, update datanya
-        existing_anno.acc_f = request.form.get('acc_full', type=int)
-        existing_anno.cep_f = request.form.get('accept_full', type=int)
-        existing_anno.rea_f = request.form.get('read_full', type=int)
-        existing_anno.rev_full = request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang)
-        
-        existing_anno.acc_m = request.form.get('acc_mix', type=int)
-        existing_anno.cep_m = request.form.get('accept_mix', type=int)
-        existing_anno.rea_m = request.form.get('read_mix', type=int)
-        existing_anno.rev_mix = request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
-    else:
-        # Jika belum, buat baru
-        new_anno = Annotation(
-            review_id=review_id,
-            user_id=current_user.id,
-            acc_f=request.form.get('acc_full', type=int),
-            cep_f=request.form.get('accept_full', type=int),
-            rea_f=request.form.get('read_full', type=int),
-            rev_full=request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang),
-            
-            acc_m=request.form.get('acc_mix', type=int),
-            cep_m=request.form.get('accept_mix', type=int),
-            rea_m=request.form.get('read_mix', type=int),
-            rev_mix=request.form.get('rev_mix') or (review.trans_mix_jawa if current_user.role == 'jawa' else review.trans_mix_palembang)
-        )
-        db.session.add(new_anno)
-        
+    # Pertanyaan Tambahan Code-Mixed
+    anno.dominant_lang = request.form.get('dominant_lang')
+    anno.count_local = request.form.get('count_local', type=int)
+    anno.count_indog = request.form.get('count_indog', type=int)
+    anno.other_langs = request.form.get('other_langs')
+    anno.word_tags_mix = request.form.get('word_tags_mix', '') # Tangkap hasil token/bubble tagging
+    
     db.session.commit()
-    return redirect(url_for('annotate'))
+    return redirect(url_for('annotate_codemixed'))
 
-# --- OTOMATIS INISIALISASI DATABASE KUNCI PAS 1000 ---
+# --- DB INIT ---
 with app.app_context():
     db.create_all()
-    
-    # 1. Buat User otomatis jika tabel user masih kosong
     if User.query.count() == 0:
         users_config = os.getenv('USERS_CONFIG')
         if users_config:
@@ -210,23 +235,17 @@ with app.app_context():
                 parts = entry.strip().split(':')
                 if len(parts) == 3:
                     uname, upass, urole = parts[0], parts[1], parts[2]
-                    hashed_pw = generate_password_hash(upass)
-                    db.session.add(User(username=uname, password=hashed_pw, role=urole))
+                    db.session.add(User(username=uname, password=generate_password_hash(upass), role=urole))
             db.session.commit()
-            print("✅ User default berhasil dibuat!")
 
-    # 2. Import CSV dikunci mutlak tepat 1000 baris pertama saja
     total_reviews = Review.query.count()
     if total_reviews < 1000:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, 'dataset_website.csv')
-        
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path).fillna('').head(1000)
-            
             needed = 1000 - total_reviews
             df_to_insert = df.tail(needed) if total_reviews > 0 else df
-            
             for _, row in df_to_insert.iterrows():
                 rev = Review(
                     content=row.get('content', ''),
@@ -241,11 +260,7 @@ with app.app_context():
                     trans_mix_palembang=row.get('trans_mix_palembang', '')
                 )
                 db.session.add(rev)
-            
             db.session.commit()
-            print(f"✅ Selesai! Total review dikunci tepat di angka 1000.")
-        else:
-            print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
 
 if __name__ == '__main__':
     app.run(debug=True)
