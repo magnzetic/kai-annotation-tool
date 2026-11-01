@@ -178,10 +178,10 @@ def submit(review_id):
     db.session.commit()
     return redirect(url_for('annotate'))
 
-# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP ---
+# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP (ANTI-DOBEL) ---
 with app.app_context():
     db.create_all()
-
+    
     # 1. Buat User otomatis jika tabel user masih kosong
     if User.query.count() == 0:
         users_config = os.getenv('USERS_CONFIG')
@@ -195,31 +195,42 @@ with app.app_context():
             db.session.commit()
             print("✅ User default berhasil dibuat!")
 
-    # 2. Import CSV otomatis jika tabel review masih kosong
-    if Review.query.count() == 0:
+    # 2. Import CSV dengan proteksi ketat (Cek apakah data sudah ada)
+    current_count = Review.query.count()
+    if current_count == 0:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, 'dataset_website.csv')
-
+        
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path).fillna('')
+            print(f"📦 Memulai import {len(df)} data review...")
+            
             for _, row in df.iterrows():
-                rev = Review(
-                    content=row.get('content', ''),
-                    performa=row.get('Performa', ''),
-                    tampilan=row.get('Tampilan', ''),
-                    tiket=row.get('Tiket', ''),
-                    pembayaran=row.get('Pembayaran', ''),
-                    akun=row.get('Akun', ''),
-                    trans_jawa=row.get('trans_jawa', ''),
-                    trans_mix_jawa=row.get('trans_mix_jawa', ''),
-                    trans_palembang=row.get('trans_palembang', ''),
-                    trans_mix_palembang=row.get('trans_mix_palembang', '')
-                )
-                db.session.add(rev)
+                content_text = row.get('content', '')
+                # Pastikan tidak ada content yang sama persis lolos ke database
+                if content_text:
+                    exists = Review.query.filter_by(content=content_text).first()
+                    if not exists:
+                        rev = Review(
+                            content=content_text,
+                            performa=row.get('Performa', ''),
+                            tampilan=row.get('Tampilan', ''),
+                            tiket=row.get('Tiket', ''),
+                            pembayaran=row.get('Pembayaran', ''),
+                            akun=row.get('Akun', ''),
+                            trans_jawa=row.get('trans_jawa', ''),
+                            trans_mix_jawa=row.get('trans_mix_jawa', ''),
+                            trans_palembang=row.get('trans_palembang', ''),
+                            trans_mix_palembang=row.get('trans_mix_palembang', '')
+                        )
+                        db.session.add(rev)
+            
             db.session.commit()
-            print(f"📦 Berhasil mengimport {len(df)} data review dari CSV!")
+            print(f"✅ Selesai! Total review di database sekarang: {Review.query.count()}")
         else:
             print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
+    else:
+        print(f"ℹ️ Review sudah ada ({current_count} data), proses import CSV dilewati.")
 
 if __name__ == '__main__':
     app.run(debug=True)
