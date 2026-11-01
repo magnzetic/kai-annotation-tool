@@ -63,8 +63,7 @@
                         <div class="progress mb-3" style="height: 10px;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent_mix }}%;"></div>
                         </div>
-                        <!-- Pastikan tombolnya tidak terkunci oleh kondisi 1000 data lagi di HTML -->
-                        <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success">Lanjutkan Sesi Code-Mixed</a>
+                        <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success w-100">Lanjutkan Sesi Code-Mixed</a>
                     </div>
                 </div>
                 {% endif %}
