@@ -209,7 +209,7 @@ def transition_codemixed():
 @login_required
 def annotate_codemixed():
     done_mono_count = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-    if done_mono_count < 1000:
+    if done_mono_count < 0:
         flash('⚠️ Anda harus menyelesaikan 1000 data Monolingual terlebih dahulu!', 'warning')
         return redirect(url_for('annotate_monolingual'))
 
