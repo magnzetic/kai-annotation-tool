@@ -16,7 +16,6 @@
         </div>
 
         <form action="{{ url_for('edit_monolingual', annotation_id=anno.id) }}" method="POST">
-            <!-- REVIEW ASLI -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white fw-bold">Review Asli (Indonesia)</div>
                 <div class="card-body">
@@ -24,7 +23,6 @@
                 </div>
             </div>
 
-            <!-- TERJEMAHAN MONOLINGUAL -->
             <div class="card mb-4 shadow-sm border-primary">
                 <div class="card-header bg-secondary text-white fw-bold">
                     Terjemahan Full ({{ current_user.role | capitalize }})
@@ -35,27 +33,25 @@
                         <p id="targetTextMono" class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
                     </div>
 
-                    <!-- WORD LEVEL TAGGING -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging Monolingual: <span class="text-danger">*</span></label>
                         <div id="bubbleContainerMono" class="p-3 bg-light border rounded d-flex flex-wrap gap-3"></div>
                         <input type="hidden" name="word_tags_json" id="word_tags_mono_input">
                     </div>
 
-                    <!-- PERLU PERBAIKAN -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full or anno.rev_full == "" %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full and anno.rev_full != "" %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full %}d-none{% endif %}">
+                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full or anno.rev_full == "" %}d-none{% endif %}">
                         <label class="form-label fw-bold text-danger">✍️ Teks Revisi: <span class="text-danger">*</span></label>
                         <textarea id="rev_full" name="rev_full" class="form-control" rows="2">{{ anno.rev_full }}</textarea>
                     </div>
@@ -63,7 +59,6 @@
                     <hr>
                     <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
                     
-                    <!-- ACCURACY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" {% if anno.acc_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
@@ -71,7 +66,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1" {% if anno.acc_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
-                    <!-- ACCEPTABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" {% if anno.cep_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Acceptable</label></div>
@@ -79,7 +73,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1" {% if anno.cep_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
-                    <!-- READABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" {% if anno.rea_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
@@ -108,11 +101,11 @@
                 } else {
                     container.classList.add('d-none');
                     textarea.required = false;
+                    textarea.value = '';
                 }
             });
         });
 
-        // Script Word Tagger dengan load data yang sudah diisi sebelumnya
         const textElem = document.getElementById('targetTextMono');
         const container = document.getElementById('bubbleContainerMono');
         const hiddenInput = document.getElementById('word_tags_mono_input');
