@@ -112,6 +112,17 @@ def history():
     annotations = Annotation.query.filter_by(user_id=current_user.id).all()
     return render_template('history.html', annotations=annotations)
 
+# --- RUTE PENGAMAN AGAR TIDAK ERROR 404 ---
+@app.route('/annotate')
+@login_required
+def annotate():
+    # Cek apakah user sudah selesai 1000 monolingual atau belum
+    done_mono = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+    if done_mono < 1000:
+        return redirect(url_for('annotate_monolingual'))
+    else:
+        return redirect(url_for('annotate_codemixed'))
+
 @app.route('/edit/<int:annotation_id>', methods=['GET', 'POST'])
 @login_required
 def edit_annotation(annotation_id):
@@ -226,9 +237,11 @@ def submit_codemixed(review_id):
     db.session.commit()
     return redirect(url_for('annotate_codemixed'))
 
-# --- DB INIT ---
+# --- OTOMATIS INISIALISASI DATABASE & USER ---
 with app.app_context():
     db.create_all()
+    
+    # 1. Buat User otomatis jika tabel user masih kosong
     if User.query.count() == 0:
         users_config = os.getenv('USERS_CONFIG')
         if users_config:
@@ -236,18 +249,23 @@ with app.app_context():
                 parts = entry.strip().split(':')
                 if len(parts) == 3:
                     uname, upass, urole = parts[0], parts[1], parts[2]
-                    db.session.add(User(username=uname, password=generate_password_hash(upass), role=urole))
+                    hashed_pw = generate_password_hash(upass)
+                    db.session.add(User(username=uname, password=hashed_pw, role=urole))
             db.session.commit()
+            print("✅ User default berhasil dibuat!")
 
-    total_reviews = Review.query.count()
-    if total_reviews < 1000:
+    # 2. IMPORT CSV HANYA JIKA TABEL REVIEW BENAR-BENAR KOSONG (0)
+    # Kita pakai operator 'is None' atau cek persis 0 untuk mencegah dobel akibat worker ganda
+    if Review.query.first() is None:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, 'dataset_website.csv')
+        
         if os.path.exists(csv_path):
+            # Baca CSV dan AMBIL PAS 1000 BARIS PERTAMA SAJA
             df = pd.read_csv(csv_path).fillna('').head(1000)
-            needed = 1000 - total_reviews
-            df_to_insert = df.tail(needed) if total_reviews > 0 else df
-            for _, row in df_to_insert.iterrows():
+            print(f"📦 Mengimport tepat {len(df)} data review...")
+            
+            for _, row in df.iterrows():
                 rev = Review(
                     content=row.get('content', ''),
                     performa=row.get('Performa', ''),
@@ -261,7 +279,13 @@ with app.app_context():
                     trans_mix_palembang=row.get('trans_mix_palembang', '')
                 )
                 db.session.add(rev)
+            
             db.session.commit()
+            print(f"✅ Selesai! Total review dikunci tepat di angka 1000.")
+        else:
+            print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
+    else:
+        print(f"ℹ️ Database review sudah ada isinya, import CSV dilewati.")
 
 if __name__ == '__main__':
     app.run(debug=True)
