@@ -19,20 +19,18 @@
             </div>
         </div>
 
-        <!-- PETUNJUK -->
         <div class="card mb-4 shadow-sm border-info">
             <div class="card-body bg-white">
                 <h5 class="card-title text-info">📌 Petunjuk Anotasi Monolingual & Word Tagging</h5>
                 <p class="card-text small text-muted mb-0">
                     1. Nilai akurasi, penerimaan, dan keterbacaan teks terjemahan bahasa daerah penuh.<br>
-                    2. Lakukan <strong>Word-Level Tagging</strong>: klik pada kata-kata di bawah untuk menandai bahasanya (Klik sekali untuk ubah label).<br>
+                    2. Lakukan <strong>Word-Level Tagging</strong>: pilih jenis bahasa untuk setiap kata pada dropdown yang tersedia.<br>
                     3. Semua aspek wajib diisi sebelum mengirim.
                 </p>
             </div>
         </div>
 
         <form action="{{ url_for('submit_monolingual', review_id=item.id) }}" method="POST">
-            <!-- ORIGINAL -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white">Review Asli (Indonesia)</div>
                 <div class="card-body">
@@ -40,127 +38,34 @@
                 </div>
             </div>
 
-            <!-- TERJEMAHAN MONOLINGUAL -->
             <div class="card mb-4 shadow-sm border-primary">
                 <div class="card-header bg-secondary text-white fw-bold">
-                    Terjemahan Full ({{ 'Bahasa Jawa' if role == 'jawa' else 'Bahasa Palembang' }})
+                    Terjemahan Full ({{ current_user.role | capitalize }})
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
-                        <p id="targetTextContent" class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if role == 'jawa' else item.trans_palembang }}</p>
+                        <p id="targetTextMono" class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if current_user.role == 'jawa' else item.trans_palembang }}</p>
                     </div>
 
-                    <!-- WORD LEVEL TAGGING (KATA PER KATA DENGAN DROPDOWN WAJIB DIISI) -->
                     <div class="mb-4 p-3 bg-white border rounded">
-                        <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging (Wajib pilih bahasa untuk setiap kata): <span class="text-danger">*</span></label>
-                        <p class="small text-muted mb-3">Tiap kata di bawah ini wajib ditentukan jenis bahasanya secara manual oleh Anda.</p>
-                        
-                        <div id="wordTagContainer" class="p-3 bg-light border rounded d-flex flex-wrap gap-3">
-                            <!-- Akan digenerate otomatis oleh JavaScript -->
-                        </div>
-                        <!-- Input tersembunyi untuk menampung data JSON hasil tagging -->
-                        <input type="hidden" name="word_tags_json" id="word_tags_json" required>
+                        <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging Monolingual: <span class="text-danger">*</span></label>
+                        <div id="bubbleContainerMono" class="p-3 bg-light border rounded d-flex flex-wrap gap-3"></div>
+                        <input type="hidden" name="word_tags_json" id="word_tags_mono_input">
                     </div>
-                    
-                    <script>
-                        // Ambil role user dari backend Flask (misal 'jawa' atau 'palembang')
-                        const userRole = "{{ current_user.role | capitalize }}"; 
-                    
-                        const textElem = document.getElementById('targetTextContent');
-                        const container = document.getElementById('wordTagContainer');
-                        const hiddenInput = document.getElementById('word_tags_json');
-                        
-                        const words = textElem.innerText.trim().split(/\s+/);
-                        let wordTags = words.map(w => ({ word: w, lang: "" })); // Awalnya kosong
-                    
-                        function renderWordTagger() {
-                            container.innerHTML = '';
-                            words.forEach((word, index) => {
-                                let box = document.createElement('div');
-                                box.className = "p-2 bg-white border rounded shadow-sm text-center";
-                                box.style.minWidth = "130px";
-                    
-                                let wordLabel = document.createElement('div');
-                                wordLabel.innerText = word;
-                                wordLabel.className = "fw-bold mb-1 text-primary small";
-                    
-                                let select = document.createElement('select');
-                                select.className = "form-select form-select-sm";
-                                select.required = true; // Wajib diisi
-                    
-                                // Opsi Default (Kosong)
-                                let optDefault = document.createElement('option');
-                                optDefault.value = "";
-                                optDefault.innerText = "-- Pilih Bahasa --";
-                                optDefault.disabled = true;
-                                optDefault.selected = (wordTags[index].lang === "");
-                                select.appendChild(optDefault);
-                    
-                                // Opsi Bahasa Indonesia
-                                let optIndo = document.createElement('option');
-                                optIndo.value = "Indonesia";
-                                optIndo.innerText = "Indonesia";
-                                optIndo.selected = (wordTags[index].lang === "Indonesia");
-                                select.appendChild(optIndo);
-                    
-                                // Opsi Bahasa Daerah sesuai Role (Jawa / Palembang)
-                                let optLocal = document.createElement('option');
-                                optLocal.value = userRole;
-                                optLocal.innerText = userRole; // Otomatis menyesuaikan role (Jawa / Palembang)
-                                optLocal.selected = (wordTags[index].lang === userRole);
-                                select.appendChild(optLocal);
-                    
-                                // Opsi Lainnya / Asing
-                                let optOther = document.createElement('option');
-                                optOther.value = "Lainnya";
-                                optOther.innerText = "Lainnya / Asing";
-                                optOther.selected = (wordTags[index].lang === "Lainnya");
-                                select.appendChild(optOther);
-                    
-                                // Event saat dipilih
-                                select.onchange = (e) => {
-                                    wordTags[index].lang = e.target.value;
-                                    hiddenInput.value = JSON.stringify(wordTags);
-                                };
-                    
-                                box.appendChild(wordLabel);
-                                box.appendChild(select);
-                                container.appendChild(box);
-                            });
-                            
-                            hiddenInput.value = wordTags.every(t => t.lang !== "") ? JSON.stringify(wordTags) : "";
-                        }
-                    
-                        renderWordTagger();
-                    
-                        // Validasi submit agar tidak ada kata yang terlewat kosong
-                        document.querySelector('form').onsubmit = function(e) {
-                            for(let i = 0; i < wordTags.length; i++) {
-                                if(!wordTags[i].lang) {
-                                    alert(`Mohon pilih bahasa untuk kata ke-${i+1} ("${words[i]}")!`);
-                                    e.preventDefault();
-                                    return false;
-                                }
-                            }
-                            hiddenInput.value = JSON.stringify(wordTags);
-                        };
-                    </script>
 
-                    <!-- PERLU PERBAIKAN -->
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full or anno.rev_full == "" %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" required>
                             <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full and anno.rev_full != "" %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" required>
                             <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <!-- REVISI TEXT -->
                     <div id="container_rev_full" class="mb-4 d-none">
                         <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi: <span class="text-danger">*</span></label>
                         <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
@@ -169,7 +74,6 @@
                     <hr>
                     <h6 class="text-muted fw-bold mb-3">Penilaian Kualitas:</h6>
                     
-                    <!-- ACCURACY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" required><label class="form-check-label">3 — Accurate</label></div>
@@ -177,7 +81,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1"><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
-                    <!-- ACCEPTABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" required><label class="form-check-label">3 — Acceptable</label></div>
@@ -185,7 +88,6 @@
                         <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1"><label class="form-check-label">1 — Not Acceptable</label></div>
                     </div>
 
-                    <!-- READABILITY -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
                         <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" required><label class="form-check-label">3 — Readable</label></div>
@@ -202,7 +104,8 @@
     </div>
 
     <script>
-        // Toggle Revisi
+        const userRole = "{{ current_user.role | capitalize }}";
+
         document.querySelectorAll('.need-rev-full').forEach(radio => {
             radio.addEventListener('change', function() {
                 let container = document.getElementById('container_rev_full');
@@ -218,40 +121,73 @@
             });
         });
 
-        // Script Interaktif Word-Level Tagging (Bubble System)
         const textElem = document.getElementById('targetTextMono');
         const container = document.getElementById('bubbleContainerMono');
-        const hiddenInput = document.getElementById('word_tags_mono');
+        const hiddenInput = document.getElementById('word_tags_mono_input');
         
         const words = textElem.innerText.trim().split(/\s+/);
-        let tags = words.map(w => ({ word: w, lang: 'Daerah' })); // Default label
+        let wordTags = words.map(w => ({ word: w, lang: "" }));
 
-        function renderBubbles() {
+        function render() {
             container.innerHTML = '';
-            words.forEach((word, idx) => {
-                let badge = document.createElement('span');
-                badge.innerText = word + ` (${tags[idx].lang})`;
-                badge.className = "badge p-2 cursor-pointer user-select-none ";
-                
-                // Warna badge berdasarkan bahasa
-                if(tags[idx].lang === 'Daerah') badge.classList.add('bg-success');
-                else if(tags[idx].lang === 'Indonesia') badge.classList.add('bg-primary');
-                else badge.classList.add('bg-warning', 'text-dark');
+            words.forEach((word, index) => {
+                let box = document.createElement('div');
+                box.className = "p-2 bg-white border rounded shadow-sm text-center";
+                box.style.minWidth = "120px";
 
-                // Klik untuk mengganti tag bahasa
-                badge.onclick = () => {
-                    if(tags[idx].lang === 'Daerah') tags[idx].lang = 'Indonesia';
-                    else if(tags[idx].lang === 'Indonesia') tags[idx].lang = 'Lainnya';
-                    else tags[idx].lang = 'Daerah';
-                    
-                    hiddenInput.value = JSON.stringify(tags);
-                    renderBubbles();
+                let label = document.createElement('div');
+                label.innerText = word;
+                label.className = "fw-bold mb-1 text-primary small";
+
+                let select = document.createElement('select');
+                select.className = "form-select form-select-sm";
+                select.required = true;
+
+                let optDefault = document.createElement('option');
+                optDefault.value = "";
+                optDefault.innerText = "-- Pilih --";
+                optDefault.disabled = true;
+                optDefault.selected = true;
+                select.appendChild(optDefault);
+
+                let optIndo = document.createElement('option');
+                optIndo.value = "Indonesia";
+                optIndo.innerText = "Indonesia";
+                select.appendChild(optIndo);
+
+                let optLocal = document.createElement('option');
+                optLocal.value = userRole;
+                optLocal.innerText = userRole;
+                select.appendChild(optLocal);
+
+                let optOther = document.createElement('option');
+                optOther.value = "Lainnya";
+                optOther.innerText = "Lainnya";
+                select.appendChild(optOther);
+
+                select.onchange = (e) => {
+                    wordTags[index].lang = e.target.value;
+                    hiddenInput.value = JSON.stringify(wordTags);
                 };
-                container.appendChild(badge);
+
+                box.appendChild(label);
+                box.appendChild(select);
+                container.appendChild(box);
             });
-            hiddenInput.value = JSON.stringify(tags);
+            hiddenInput.value = "";
         }
-        renderBubbles();
+        render();
+
+        document.querySelector('form').onsubmit = function(e) {
+            for(let i = 0; i < wordTags.length; i++) {
+                if(!wordTags[i].lang) {
+                    alert(`Mohon lengkapi pilihan bahasa untuk kata ke-${i+1} ("${words[i]}")!`);
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            hiddenInput.value = JSON.stringify(wordTags);
+        };
     </script>
 </body>
 </html>
