@@ -7,19 +7,15 @@ def setup():
     with app.app_context():
         db.create_all()
         
-        # Ambil konfigurasi user rahasia dari environment variable
-        # Format string di Vercel nanti: "user1:pass1:jawa,user2:pass2:jawa,user3:pass3:palembang,user4:pass4:palembang"
+        # 1. Parsing data user secara dinamis dari environment variable
         users_env = os.getenv('USERS_CONFIG')
-        
         if users_env:
-            # Parsing data user secara dinamis dari environment variable
             user_entries = users_env.split(',')
             for entry in user_entries:
                 parts = entry.strip().split(':')
                 if len(parts) == 3:
                     uname, upass, urole = parts[0], parts[1], parts[2]
                     
-                    # Cek apakah user sudah ada di database
                     if not User.query.filter_by(username=uname).first():
                         hashed_pw = generate_password_hash(upass)
                         new_user = User(username=uname, password=hashed_pw, role=urole)
@@ -30,7 +26,7 @@ def setup():
         else:
             print("⚠️ Peringatan: USERS_CONFIG belum diatur di Environment Variables!")
 
-        # 2. Tambah Data Review dari CSV
+        # 2. Tambah Data Review dari CSV Gabungan
         if Review.query.count() == 0:
             base_dir = os.path.dirname(os.path.abspath(__file__))
             csv_path = os.path.join(base_dir, os.getenv('CSV_FILE_PATH', 'dataset_website.csv'))
