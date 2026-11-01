@@ -162,7 +162,7 @@ def edit_codemixed(annotation_id):
 @login_required
 def annotate():
     done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-    if done_mono < 1000:
+    if done_mono < 0:
         return redirect(url_for('annotate_monolingual'))
     else:
         return redirect(url_for('annotate_codemixed'))
