@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sesi Monolingual Selesai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-indigo-100">
+        <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            🎉
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Sesi Monolingual Selesai!</h1>
+        <p class="text-gray-600 text-sm mb-6 leading-relaxed">
+            Hebat! Anda telah merampungkan 1.000 data terjemahan Monolingual. Sekarang mari kita lanjutkan ke sesi berikutnya yaitu penilaian teks <strong>Code-Mixed (Campuran)</strong>.
+        </p>
+        <a href="{{ url_for('annotate_codemixed') }}" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-md transition duration-200">
+            Lanjutkan ke Data Code-Mixed &rarr;
+        </a>
+    </div>
+</body>
+</html>
