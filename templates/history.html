@@ -21,7 +21,7 @@
                             <th># ID Review</th>
                             <th>Teks Asli</th>
                             <th>Waktu Anotasi</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="text-center">Aksi Edit</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -31,7 +31,11 @@
                             <td>{{ anno.review.content[:50] }}...</td>
                             <td>{{ anno.timestamp.strftime('%Y-%m-%d %H:%M') if anno.timestamp else '-' }}</td>
                             <td class="text-center">
-                                <a href="{{ url_for('edit_annotation', annotation_id=anno.id) }}" class="btn btn-warning btn-sm">Edit / Revisi</a>
+                                <!-- Tombol Edit Dipisah Menjadi Dua Sesi -->
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('edit_monolingual', annotation_id=anno.id) }}" class="btn btn-outline-primary btn-sm">Edit Monolingual</a>
+                                    <a href="{{ url_for('edit_codemixed', annotation_id=anno.id) }}" class="btn btn-outline-success btn-sm">Edit Code-Mixed</a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
