@@ -10,7 +10,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kai-access-anotasi-2024'
 db_url = os.getenv('DATABASE_URL')
 
-
 if db_url:
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
@@ -37,7 +36,7 @@ class User(UserMixin, db.Model):
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False, unique=True) # <-- unique=True untuk mencegah duplikasi konten
+    content = db.Column(db.Text, nullable=False)
     performa = db.Column(db.String(50))
     tampilan = db.Column(db.String(50))
     tiket = db.Column(db.String(50))
@@ -178,11 +177,11 @@ def submit(review_id):
     db.session.commit()
     return redirect(url_for('annotate'))
 
-# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP (Hanya 1 blok di bawah) ---
+# --- OTOMATIS INISIALISASI DATABASE, USER, & CSV SAAT STARTUP ---
 with app.app_context():
     db.create_all()
     
-    # 1. Buat User otomatis jika tabel masih kosong
+    # 1. Buat User otomatis jika tabel user masih kosong
     if User.query.count() == 0:
         users_config = os.getenv('USERS_CONFIG')
         if users_config:
@@ -195,36 +194,31 @@ with app.app_context():
             db.session.commit()
             print("✅ User default berhasil dibuat!")
 
-    # 2. Import CSV otomatis dengan proteksi anti-duplikasi
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(base_dir, 'dataset_website.csv')
-    
-    if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path).fillna('')
-        if Review.query.count() < len(df):
+    # 2. Import CSV otomatis dengan pengecekan standar (jika tabel review kosong)
+    if Review.query.count() == 0:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'dataset_website.csv')
+        
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path).fillna('')
             for _, row in df.iterrows():
-                content_text = row.get('content', '')
-                # Cek apakah konten sudah ada untuk mencegah duplikasi race condition
-                if content_text and not Review.query.filter_by(content=content_text).first():
-                    rev = Review(
-                        content=content_text,
-                        performa=row.get('Performa', ''),
-                        tampilan=row.get('Tampilan', ''),
-                        tiket=row.get('Tiket', ''),
-                        pembayaran=row.get('Pembayaran', ''),
-                        akun=row.get('Akun', ''),
-                        trans_jawa=row.get('trans_jawa', ''),
-                        trans_mix_jawa=row.get('trans_mix_jawa', ''),
-                        trans_palembang=row.get('trans_palembang', ''),
-                        trans_mix_palembang=row.get('trans_mix_palembang', '')
-                    )
-                    db.session.add(rev)
+                rev = Review(
+                    content=row.get('content', ''),
+                    performa=row.get('Performa', ''),
+                    tampilan=row.get('Tampilan', ''),
+                    tiket=row.get('Tiket', ''),
+                    pembayaran=row.get('Pembayaran', ''),
+                    akun=row.get('Akun', ''),
+                    trans_jawa=row.get('trans_jawa', ''),
+                    trans_mix_jawa=row.get('trans_mix_jawa', ''),
+                    trans_palembang=row.get('trans_palembang', ''),
+                    trans_mix_palembang=row.get('trans_mix_palembang', '')
+                )
+                db.session.add(rev)
             db.session.commit()
-            print(f"📦 Sinkronisasi data review dari CSV selesai!")
+            print(f"📦 Berhasil mengimport {len(df)} data review dari CSV!")
         else:
-            print(f"ℹ️ Data review di database sudah lengkap.")
-    else:
-        print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
+            print(f"⚠️ File CSV tidak ditemukan di path: {csv_path}")
 
 if __name__ == '__main__':
     app.run(debug=True)
