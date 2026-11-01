@@ -64,31 +64,32 @@
                     </div>
                     
                     <script>
-                        // Ambil teks target terjemahan
-                        const rawText = document.getElementById('targetTextContent').innerText.trim();
-                        const words = rawText.split(/\s+/);
+                        // Ambil role user dari backend Flask (misal 'jawa' atau 'palembang')
+                        const userRole = "{{ current_user.role | capitalize }}"; 
+                    
+                        const textElem = document.getElementById('targetTextContent');
                         const container = document.getElementById('wordTagContainer');
                         const hiddenInput = document.getElementById('word_tags_json');
-                    
-                        // Buat struktur array objek dengan nilai awal '""' (kosong, belum dipilih)
-                        let wordTags = words.map(w => ({ word: w, lang: "" }));
+                        
+                        const words = textElem.innerText.trim().split(/\s+/);
+                        let wordTags = words.map(w => ({ word: w, lang: "" })); // Awalnya kosong
                     
                         function renderWordTagger() {
                             container.innerHTML = '';
                             words.forEach((word, index) => {
                                 let box = document.createElement('div');
                                 box.className = "p-2 bg-white border rounded shadow-sm text-center";
-                                box.style.minWidth = "120px";
+                                box.style.minWidth = "130px";
                     
                                 let wordLabel = document.createElement('div');
                                 wordLabel.innerText = word;
-                                wordLabel.className = "fw-bold mb-1 small text-primary";
+                                wordLabel.className = "fw-bold mb-1 text-primary small";
                     
                                 let select = document.createElement('select');
                                 select.className = "form-select form-select-sm";
-                                select.required = true; // WAJIB DIISI
+                                select.required = true; // Wajib diisi
                     
-                                // Opsi pilihan bahasa (Awalnya default kosong)
+                                // Opsi Default (Kosong)
                                 let optDefault = document.createElement('option');
                                 optDefault.value = "";
                                 optDefault.innerText = "-- Pilih Bahasa --";
@@ -96,28 +97,28 @@
                                 optDefault.selected = (wordTags[index].lang === "");
                                 select.appendChild(optDefault);
                     
-                                // Pilihan bahasa Indonesia
+                                // Opsi Bahasa Indonesia
                                 let optIndo = document.createElement('option');
                                 optIndo.value = "Indonesia";
                                 optIndo.innerText = "Indonesia";
                                 optIndo.selected = (wordTags[index].lang === "Indonesia");
                                 select.appendChild(optIndo);
                     
-                                // Pilihan bahasa Daerah (Jawa/Palembang)
+                                // Opsi Bahasa Daerah sesuai Role (Jawa / Palembang)
                                 let optLocal = document.createElement('option');
-                                optLocal.value = "Daerah";
-                                optLocal.innerText = "Daerah (Jawa/Plg)";
-                                optLocal.selected = (wordTags[index].lang === "Daerah");
+                                optLocal.value = userRole;
+                                optLocal.innerText = userRole; // Otomatis menyesuaikan role (Jawa / Palembang)
+                                optLocal.selected = (wordTags[index].lang === userRole);
                                 select.appendChild(optLocal);
                     
-                                // Pilihan bahasa Lainnya
+                                // Opsi Lainnya / Asing
                                 let optOther = document.createElement('option');
                                 optOther.value = "Lainnya";
                                 optOther.innerText = "Lainnya / Asing";
                                 optOther.selected = (wordTags[index].lang === "Lainnya");
                                 select.appendChild(optOther);
                     
-                                // Event saat annotator memilih dropdown
+                                // Event saat dipilih
                                 select.onchange = (e) => {
                                     wordTags[index].lang = e.target.value;
                                     hiddenInput.value = JSON.stringify(wordTags);
@@ -128,17 +129,16 @@
                                 container.appendChild(box);
                             });
                             
-                            // Update nilai awal ke input hidden (jika belum diisi, kosong agar validasi required menolak)
                             hiddenInput.value = wordTags.every(t => t.lang !== "") ? JSON.stringify(wordTags) : "";
                         }
                     
                         renderWordTagger();
                     
-                        // Validasi tambahan sebelum form disubmit agar tidak ada yang terlewat kosong
+                        // Validasi submit agar tidak ada kata yang terlewat kosong
                         document.querySelector('form').onsubmit = function(e) {
                             for(let i = 0; i < wordTags.length; i++) {
                                 if(!wordTags[i].lang) {
-                                    alert(`Mohon lengkapi pilihan bahasa untuk kata ke-${i+1} ("${words[i]}")!`);
+                                    alert(`Mohon pilih bahasa untuk kata ke-${i+1} ("${words[i]}")!`);
                                     e.preventDefault();
                                     return false;
                                 }
