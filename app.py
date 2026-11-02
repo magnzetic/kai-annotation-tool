@@ -114,27 +114,29 @@ def history():
     annotations = Annotation.query.filter_by(user_id=current_user.id).all()
     return render_template('history.html', annotations=annotations)
 
-@app.route('/edit/monolingual/<int:annotation_id>', methods=['GET', 'POST'])
+@app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
 @login_required
-def edit_monolingual(annotation_id):
-    anno = Annotation.query.get_or_404(annotation_id)
-    if anno.user_id != current_user.id:
-        return redirect(url_for('history'))
-        
-    review = Review.query.get(anno.review_id)
+def edit_monolingual(review_id):
+    review = Review.query.get_or_404(review_id)
+    # Cari anotasi milik user yang sedang login untuk review ini
+    anno = Annotation.query.filter_by(review_id=review.id, user_id=current_user.id).first_or_404()
     
     if request.method == 'POST':
-        anno.rev_full = request.form.get('rev_full') if request.form.get('need_rev_full') == 'yes' else ''
-        anno.acc_f = request.form.get('acc_full', type=int)
-        anno.cep_f = request.form.get('accept_full', type=int)
-        anno.rea_f = request.form.get('read_full', type=int)
-        anno.word_tags_mono = request.form.get('word_tags_json', '')
+        anno.acc_f = request.form.get('acc_f', type=int)
+        anno.cep_f = request.form.get('cep_f', type=int)
+        anno.rea_f = request.form.get('rea_f', type=int)
         
+        need_rev = request.form.get('need_rev_full')
+        if need_rev == 'yes':
+            anno.rev_full = request.form.get('rev_full')
+        else:
+            anno.rev_full = None  # Kosongkan jika tidak perlu perbaikan
+            
         db.session.commit()
+        flash('Anotasi Monolingual berhasil diperbarui!', 'success')
         return redirect(url_for('history'))
         
-    user_role = current_user.role
-    return render_template('edit_mono.html', anno=anno, review=review, role=user_role)
+    return render_template('edit_mono.html', review=review, anno=anno)
 
 @app.route('/edit/codemixed/<int:annotation_id>', methods=['GET', 'POST'])
 @login_required
