@@ -110,9 +110,19 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
-    annotations = Annotation.query.filter_by(user_id=current_user.id).all()
-    return render_template('history.html', annotations=annotations)
-
+    # Ambil semua data review, lalu cek status anotasi user yang sedang login
+    reviews = Review.query.order_by(Review.id.asc()).all()
+    reviews_with_status = []
+    
+    for rev in reviews:
+        anno = Annotation.query.filter_by(review_id=rev.id, user_id=current_user.id).first()
+        reviews_with_status.append({
+            'review': rev,
+            'anno': anno
+        })
+        
+    return render_template('history.html', reviews_with_status=reviews_with_status)
+    
 @app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
 @login_required
 def edit_monolingual(review_id):
