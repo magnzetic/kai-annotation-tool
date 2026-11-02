@@ -2,58 +2,55 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Monolingual - Review ID: #{{ review.id }}</title>
+    <title>Edit Anotasi Monolingual - KAI Annotation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h4 class="mb-0">Edit Monolingual (Review ID: #{{ review.id }})</h4>
-                <small class="text-muted">Annotator: {{ current_user.username }} (Role: {{ current_user.role | capitalize }})</small>
+                <span class="badge bg-secondary mb-1">Edit Fase 1: Monolingual</span>
+                <h4 class="mb-0">Edit Review ID: #{{ review.id }}</h4>
             </div>
-            <a href="{{ url_for('history') }}" class="btn btn-secondary btn-sm">← Kembali ke Riwayat</a>
+            <div>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-secondary btn-sm me-2">📋 Kembali ke Riwayat</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">← Dashboard</a>
+            </div>
         </div>
 
-        <form action="{{ url_for('edit_monolingual', annotation_id=anno.id) }}" method="POST">
+        <form action="{{ url_for('edit_monolingual', review_id=review.id) }}" method="POST">
             <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-primary text-white fw-bold">Review Asli (Indonesia)</div>
+                <div class="card-header bg-secondary text-white">Review Asli (Indonesia)</div>
                 <div class="card-body">
                     <p class="fs-5 mb-0"><strong>"{{ review.content }}"</strong></p>
                 </div>
             </div>
 
             <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-secondary text-white fw-bold">
-                    Terjemahan Full ({{ current_user.role | capitalize }})
+                <div class="card-header bg-primary text-white fw-bold">
+                    Terjemahan Monolingual ({{ current_user.role | capitalize }})
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
-                        <p id="targetTextMono" class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
-                    </div>
-
-                    <div class="mb-4 p-3 bg-white border rounded">
-                        <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging Monolingual: <span class="text-danger">*</span></label>
-                        <div id="bubbleContainerMono" class="p-3 bg-light border rounded d-flex flex-wrap gap-3"></div>
-                        <input type="hidden" name="word_tags_json" id="word_tags_mono_input">
+                        <p class="p-3 bg-light rounded fs-5 border">{{ review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang }}</p>
                     </div>
 
                     <div class="mb-4 p-3 bg-white border rounded">
                         <label class="form-label fw-bold text-dark d-block mb-2">Apakah hasil translasi ini perlu perbaikan? <span class="text-danger">*</span></label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full or anno.rev_full == "" %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_no" value="no" {% if not anno.rev_full %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_no">Tidak (Sudah Bagus)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full and anno.rev_full != "" %}checked{% endif %} required>
+                            <input class="form-check-input need-rev-full" type="radio" name="need_rev_full" id="rev_full_yes" value="yes" {% if anno.rev_full %}checked{% endif %} required>
                             <label class="form-check-label" for="rev_full_yes">Ya (Perlu Perbaikan)</label>
                         </div>
                     </div>
 
-                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full or anno.rev_full == "" %}d-none{% endif %}">
-                        <label class="form-label fw-bold text-danger">✍️ Teks Revisi: <span class="text-danger">*</span></label>
-                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2">{{ anno.rev_full }}</textarea>
+                    <div id="container_rev_full" class="mb-4 {% if not anno.rev_full %}d-none{% endif %}">
+                        <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi: <span class="text-danger">*</span></label>
+                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini...">{{ anno.rev_full if anno.rev_full else '' }}</textarea>
                     </div>
 
                     <hr>
@@ -61,23 +58,23 @@
                     
                     <div class="mb-3">
                         <label class="form-label fw-bold small">1. Accuracy (Kesesuaian Makna) <span class="text-danger">*</span></label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="3" {% if anno.acc_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="2" {% if anno.acc_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Accurate</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_full" value="1" {% if anno.acc_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_f" value="3" {% if anno.acc_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_f" value="2" {% if anno.acc_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Accurate</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="acc_f" value="1" {% if anno.acc_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Inaccurate</label></div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">2. Acceptability (Kewajaran Bahasa Target) <span class="text-danger">*</span></label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="3" {% if anno.cep_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Acceptable</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="2" {% if anno.cep_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Acceptable</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="accept_full" value="1" {% if anno.cep_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Acceptable</label></div>
+                        <label class="form-label fw-bold small">2. Fluency (Kewajaran Berbahasa) <span class="text-danger">*</span></label>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cep_f" value="3" {% if anno.cep_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Fluent</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cep_f" value="2" {% if anno.cep_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Fluent</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="cep_f" value="1" {% if anno.cep_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Fluent</label></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small">3. Readability (Kemudahan Pemahaman) <span class="text-danger">*</span></label>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="3" {% if anno.rea_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="2" {% if anno.rea_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Readable</label></div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="read_full" value="1" {% if anno.rea_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="rea_f" value="3" {% if anno.rea_f == 3 %}checked{% endif %} required><label class="form-check-label">3 — Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="rea_f" value="2" {% if anno.rea_f == 2 %}checked{% endif %}><label class="form-check-label">2 — Less Readable</label></div>
+                        <div class="form-check"><input class="form-check-input" type="radio" name="rea_f" value="1" {% if anno.rea_f == 1 %}checked{% endif %}><label class="form-check-label">1 — Not Readable</label></div>
                     </div>
                 </div>
             </div>
@@ -89,8 +86,6 @@
     </div>
 
     <script>
-        const userRole = "{{ current_user.role | capitalize }}";
-
         document.querySelectorAll('.need-rev-full').forEach(radio => {
             radio.addEventListener('change', function() {
                 let container = document.getElementById('container_rev_full');
@@ -105,84 +100,6 @@
                 }
             });
         });
-
-        // Script Word Tagger dengan pengaman anti-hang
-        const textElem = document.getElementById('targetTextMono');
-        const container = document.getElementById('bubbleContainerMono');
-        const hiddenInput = document.getElementById('word_tags_mono_input');
-        
-        if (textElem && container) {
-            const words = textElem.innerText.trim().split(/\s+/);
-            let savedTags = [];
-            
-            try {
-                let rawJson = '{{ anno.word_tags_mono | safe }}';
-                if (rawJson && rawJson !== 'None' && rawJson !== '') {
-                    savedTags = JSON.parse(rawJson);
-                }
-            } catch(e) { 
-                console.warn("Gagal parse JSON tag, menggunakan default kosong:", e);
-                savedTags = []; 
-            }
-
-            let wordTags = words.map((w, idx) => ({
-                word: w,
-                lang: (savedTags[idx] && savedTags[idx].lang) ? savedTags[idx].lang : ""
-            }));
-
-            function render() {
-                container.innerHTML = '';
-                words.forEach((word, index) => {
-                    let box = document.createElement('div');
-                    box.className = "p-2 bg-white border rounded shadow-sm text-center";
-                    box.style.minWidth = "120px";
-
-                    let label = document.createElement('div');
-                    label.innerText = word;
-                    label.className = "fw-bold mb-1 text-primary small";
-
-                    let select = document.createElement('select');
-                    select.className = "form-select form-select-sm";
-                    select.required = true;
-
-                    let optDefault = document.createElement('option');
-                    optDefault.value = "";
-                    optDefault.innerText = "-- Pilih --";
-                    optDefault.disabled = true;
-                    optDefault.selected = (wordTags[index].lang === "");
-                    select.appendChild(optDefault);
-
-                    let optIndo = document.createElement('option');
-                    optIndo.value = "Indonesia";
-                    optIndo.innerText = "Indonesia";
-                    optIndo.selected = (wordTags[index].lang === "Indonesia");
-                    select.appendChild(optIndo);
-
-                    let optLocal = document.createElement('option');
-                    optLocal.value = userRole;
-                    optLocal.innerText = userRole;
-                    optLocal.selected = (wordTags[index].lang === userRole);
-                    select.appendChild(optLocal);
-
-                    let optOther = document.createElement('option');
-                    optOther.value = "Lainnya";
-                    optOther.innerText = "Lainnya";
-                    optOther.selected = (wordTags[index].lang === "Lainnya");
-                    select.appendChild(optOther);
-
-                    select.onchange = (e) => {
-                        wordTags[index].lang = e.target.value;
-                        hiddenInput.value = JSON.stringify(wordTags);
-                    };
-
-                    box.appendChild(label);
-                    box.appendChild(select);
-                    container.appendChild(box);
-                });
-                hiddenInput.value = JSON.stringify(wordTags);
-            }
-            render();
-        }
     </script>
 </body>
 </html>
