@@ -21,10 +21,10 @@
 
         <div class="card mb-4 shadow-sm border-info">
             <div class="card-body bg-white">
-                <h5 class="card-title text-info">📌 Petunjuk Anotasi Monolingual & Word Tagging</h5>
+                <h5 class="card-title text-info">📌 Petunjuk Anotasi Monolingual</h5>
                 <p class="card-text small text-muted mb-0">
-                    1. Nilai akurasi, penerimaan, dan keterbacaan teks terjemahan bahasa daerah penuh.<br>
-                    2. Lakukan <strong>Word-Level Tagging</strong>: pilih jenis bahasa untuk setiap kata pada dropdown yang tersedia.<br>
+                    1. Baca & pahami terlebih dahulu review asli & hasil terjemahan, tentukan apakah hasil terjemahan perlu revisi atau tidak.<br>
+                    2. Nilai akurasi, penerimaan, dan keterbacaan teks terjemahan bahasa daerah penuh.<br>
                     3. Semua aspek wajib diisi sebelum mengirim.
                 </p>
             </div>
@@ -45,13 +45,7 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Hasil Terjemahan:</label>
-                        <p id="targetTextMono" class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if current_user.role == 'jawa' else item.trans_palembang }}</p>
-                    </div>
-
-                    <div class="mb-4 p-3 bg-white border rounded">
-                        <label class="form-label fw-bold text-dark">🏷️ Word-Level Tagging Monolingual: <span class="text-danger">*</span></label>
-                        <div id="bubbleContainerMono" class="p-3 bg-light border rounded d-flex flex-wrap gap-3"></div>
-                        <input type="hidden" name="word_tags_json" id="word_tags_mono_input">
+                        <p class="p-3 bg-light rounded fs-5 border">{{ item.trans_jawa if current_user.role == 'jawa' else item.trans_palembang }}</p>
                     </div>
 
                     <div class="mb-4 p-3 bg-white border rounded">
@@ -104,8 +98,7 @@
     </div>
 
     <script>
-        const userRole = "{{ current_user.role | capitalize }}";
-
+        // Script sederhana hanya untuk toggle textarea revisi
         document.querySelectorAll('.need-rev-full').forEach(radio => {
             radio.addEventListener('change', function() {
                 let container = document.getElementById('container_rev_full');
@@ -120,74 +113,6 @@
                 }
             });
         });
-
-        const textElem = document.getElementById('targetTextMono');
-        const container = document.getElementById('bubbleContainerMono');
-        const hiddenInput = document.getElementById('word_tags_mono_input');
-        
-        const words = textElem.innerText.trim().split(/\s+/);
-        let wordTags = words.map(w => ({ word: w, lang: "" }));
-
-        function render() {
-            container.innerHTML = '';
-            words.forEach((word, index) => {
-                let box = document.createElement('div');
-                box.className = "p-2 bg-white border rounded shadow-sm text-center";
-                box.style.minWidth = "120px";
-
-                let label = document.createElement('div');
-                label.innerText = word;
-                label.className = "fw-bold mb-1 text-primary small";
-
-                let select = document.createElement('select');
-                select.className = "form-select form-select-sm";
-                select.required = true;
-
-                let optDefault = document.createElement('option');
-                optDefault.value = "";
-                optDefault.innerText = "-- Pilih --";
-                optDefault.disabled = true;
-                optDefault.selected = true;
-                select.appendChild(optDefault);
-
-                let optIndo = document.createElement('option');
-                optIndo.value = "Indonesia";
-                optIndo.innerText = "Indonesia";
-                select.appendChild(optIndo);
-
-                let optLocal = document.createElement('option');
-                optLocal.value = userRole;
-                optLocal.innerText = userRole;
-                select.appendChild(optLocal);
-
-                let optOther = document.createElement('option');
-                optOther.value = "Lainnya";
-                optOther.innerText = "Lainnya";
-                select.appendChild(optOther);
-
-                select.onchange = (e) => {
-                    wordTags[index].lang = e.target.value;
-                    hiddenInput.value = JSON.stringify(wordTags);
-                };
-
-                box.appendChild(label);
-                box.appendChild(select);
-                container.appendChild(box);
-            });
-            hiddenInput.value = "";
-        }
-        render();
-
-        document.querySelector('form').onsubmit = function(e) {
-            for(let i = 0; i < wordTags.length; i++) {
-                if(!wordTags[i].lang) {
-                    alert(`Mohon lengkapi pilihan bahasa untuk kata ke-${i+1} ("${words[i]}")!`);
-                    e.preventDefault();
-                    return false;
-                }
-            }
-            hiddenInput.value = JSON.stringify(wordTags);
-        };
     </script>
 </body>
 </html>
