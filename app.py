@@ -117,9 +117,18 @@ def history():
 @app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
 @login_required
 def edit_monolingual(review_id):
-    review = Review.query.get_or_404(review_id)
-    # Cari anotasi milik user yang sedang login untuk review ini
-    anno = Annotation.query.filter_by(review_id=review.id, user_id=current_user.id).first_or_404()
+    # Cari review, kalau tidak ada kembalikan ke history alih-alih error 404
+    review = Review.query.get(review_id)
+    if not review:
+        flash('Data review tidak ditemukan!', 'danger')
+        return redirect(url_for('history'))
+        
+    # Cari anotasi user, jika belum ada buatkan instance kosong secara otomatis
+    anno = Annotation.query.filter_by(review_id=review.id, user_id=current_user.id).first()
+    if not anno:
+        anno = Annotation(review_id=review.id, user_id=current_user.id)
+        db.session.add(anno)
+        db.session.commit()
     
     if request.method == 'POST':
         anno.acc_f = request.form.get('acc_f', type=int)
@@ -130,7 +139,7 @@ def edit_monolingual(review_id):
         if need_rev == 'yes':
             anno.rev_full = request.form.get('rev_full')
         else:
-            anno.rev_full = None  # Kosongkan jika tidak perlu perbaikan
+            anno.rev_full = None
             
         db.session.commit()
         flash('Anotasi Monolingual berhasil diperbarui!', 'success')
