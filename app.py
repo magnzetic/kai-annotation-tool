@@ -55,12 +55,11 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Fase 1: Monolingual
+    # Fase 1: Monolingual (Tanpa word_tags_mono)
     acc_f = db.Column(db.Integer)
     cep_f = db.Column(db.Integer)
     rea_f = db.Column(db.Integer)
     rev_full = db.Column(db.Text)
-    word_tags_mono = db.Column(db.Text)
     
     # Fase 2: Code-Mixed
     acc_m = db.Column(db.Integer)
@@ -117,13 +116,11 @@ def history():
 @app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
 @login_required
 def edit_monolingual(review_id):
-    # Cari review, kalau tidak ada kembalikan ke history alih-alih error 404
     review = Review.query.get(review_id)
     if not review:
         flash('Data review tidak ditemukan!', 'danger')
         return redirect(url_for('history'))
         
-    # Cari anotasi user, jika belum ada buatkan instance kosong secara otomatis
     anno = Annotation.query.filter_by(review_id=review.id, user_id=current_user.id).first()
     if not anno:
         anno = Annotation(review_id=review.id, user_id=current_user.id)
@@ -147,23 +144,29 @@ def edit_monolingual(review_id):
         
     return render_template('edit_mono.html', review=review, anno=anno)
 
-@app.route('/edit/codemixed/<int:annotation_id>', methods=['GET', 'POST'])
+@app.route('/edit/codemixed/<int:review_id>', methods=['GET', 'POST'])
 @login_required
-def edit_codemixed(annotation_id):
-    anno = Annotation.query.get_or_404(annotation_id)
-    if anno.user_id != current_user.id:
-        return redirect(url_for('history'))
-        
-    review = Review.query.get(anno.review_id)
+def edit_codemixed(review_id):
+    review = Review.query.get_or_404(review_id)
+    anno = Annotation.query.filter_by(review_id=review.id, user_id=current_user.id).first_or_404()
     
     if request.method == 'POST':
-        anno.rev_mix = request.form.get('rev_mix') if request.form.get('need_rev_mix') == 'yes' else ''
         anno.acc_m = request.form.get('acc_mix', type=int)
         anno.cep_m = request.form.get('accept_mix', type=int)
         anno.rea_m = request.form.get('read_mix', type=int)
-        anno.word_tags_mix = request.form.get('word_tags_json', '')
         
+        need_rev = request.form.get('need_rev_mix')
+        if need_rev == 'yes':
+            anno.rev_mix = request.form.get('rev_mix')
+        else:
+            anno.rev_mix = None
+            
+        word_tags_mix = request.form.get('word_tags_json')
+        if word_tags_mix:
+            anno.word_tags_mix = word_tags_mix
+            
         db.session.commit()
+        flash('Anotasi Code-Mixed berhasil diperbarui!', 'success')
         return redirect(url_for('history'))
         
     user_role = current_user.role
@@ -202,11 +205,15 @@ def submit_monolingual(review_id):
         anno = Annotation(review_id=review_id, user_id=current_user.id)
         db.session.add(anno)
         
-    anno.acc_f = request.form.get('acc_full', type=int)
-    anno.cep_f = request.form.get('accept_full', type=int)
-    anno.rea_f = request.form.get('read_full', type=int)
-    anno.rev_full = request.form.get('rev_full') or (review.trans_jawa if current_user.role == 'jawa' else review.trans_palembang)
-    anno.word_tags_mono = request.form.get('word_tags_json', '')
+    anno.acc_f = request.form.get('acc_f', type=int)
+    anno.cep_f = request.form.get('cep_f', type=int)
+    anno.rea_f = request.form.get('rea_f', type=int)
+    
+    need_rev = request.form.get('need_rev_full')
+    if need_rev == 'yes':
+        anno.rev_full = request.form.get('rev_full')
+    else:
+        anno.rev_full = None
     
     db.session.commit()
     return redirect(url_for('annotate_monolingual'))
