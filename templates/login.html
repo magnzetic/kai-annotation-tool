@@ -1,36 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Halaman Login Anotator</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <title>Login - KAI Annotation Platform</title>
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="d-flex align-items-center" style="height: 100vh;">
+<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-4">
-                <div class="card p-4 shadow">
+            <div class="col-md-6 col-lg-5">
+                <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white">
                     <div class="text-center mb-4">
-                        <h4 class="fw-bold" style="color: var(--kai-blue);">Sistem Anotasi Kualitas Terjemahan Teks Monolingual dan Code-Mixed Indonesia-Jawa dan Indonesia-Palembang (Studi Kasus Review Aplikasi Access by KAI)</h4>
-                        <p class="text-muted">Login Anotator</p>
+                        <span class="badge bg-primary bg-opacity-10 text-primary mb-2 px-3 py-1 rounded-pill fw-bold">KAI Research Project</span>
+                        <h5 class="fw-bold text-dark mb-2" style="line-height: 1.4; font-size: 1.05rem;">
+                            Sistem Anotasi Kualitas Terjemahan Teks Monolingual & Code-Mixed Indonesia-Jawa & Indonesia-Palembang
+                        </h5>
+                        <p class="text-muted small mb-0">Studi Kasus Review Aplikasi Access by KAI</p>
                     </div>
+
                     {% with messages = get_flashed_messages() %}
                       {% if messages %}
                         {% for message in messages %}
-                          <div class="alert alert-danger small">{{ message }}</div>
+                          <div class="alert alert-danger small py-2 text-center rounded-3">{{ message }}</div>
                         {% endfor %}
                       {% endif %}
                     {% endwith %}
+
                     <form method="POST">
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" required>
+                            <label class="form-label fw-bold text-secondary small">USERNAME</label>
+                            <input type="text" name="username" class="form-control form-control-lg fs-6 py-2" placeholder="Masukkan username..." required autofocus>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <label class="form-label fw-bold text-secondary small">PASSWORD</label>
+                            <input type="password" name="password" class="form-control form-control-lg fs-6 py-2" placeholder="Masukkan password..." required>
                         </div>
-                        <button type="submit" class="btn btn-kai w-100">MASUK</button>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fs-6 py-2 fw-bold shadow-sm" style="background-color: #003366; border-color: #003366;">MASUK SISTEM</button>
                     </form>
                 </div>
             </div>
