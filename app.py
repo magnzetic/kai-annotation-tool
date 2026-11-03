@@ -110,7 +110,11 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
-    annotations = Annotation.query.filter_by(user_id=current_user.id).all()
+    # Ambil nomor halaman dari URL (default halaman 1), tampilkan 50 data per halaman biar ringan
+    page = request.args.get('page', 1, type=int)
+    
+    pagination = Annotation.query.filter_by(user_id=current_user.id).paginate(page=page, per_page=50, error_out=False)
+    annotations = pagination.items
     
     reviews_with_status = []
     for anno in annotations:
@@ -121,7 +125,7 @@ def history():
                 'anno': anno
             })
             
-    return render_template('history.html', reviews_with_status=reviews_with_status)
+    return render_template('history.html', reviews_with_status=reviews_with_status, pagination=pagination)
     
 @app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
 @login_required
