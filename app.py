@@ -195,12 +195,18 @@ def annotate():
 @app.route('/annotate/monolingual')
 @login_required
 def annotate_monolingual():
-    done_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).all()
+    # Ambil daftar review_id yang sudah dikerjakan user ini
+    done_ids = db.session.query(Annotation.review_id).filter(
+        Annotation.user_id == current_user.id, 
+        Annotation.acc_f.isnot(None)
+    ).all()
     done_ids = [r[0] for r in done_ids]
     
+    # Cari review pertama yang belum ada di daftar done_ids
     item = Review.query.filter(~Review.id.in_(done_ids)).order_by(Review.id.asc()).first()
     
-    if not item or Review.query.filter(Review.id.in_(done_ids)).count() >= 1000:
+    # PERBAIKAN: Jika sudah tidak ada item ATAU jumlah data yang dikerjakan sudah mencapai/lebih dari 1000, langsung lempar ke transisi Code-Mixed
+    if not item or len(done_ids) >= 1000:
         return redirect(url_for('transition_codemixed'))
         
     user_role = current_user.role
@@ -227,8 +233,18 @@ def submit_monolingual(review_id):
         anno.rev_full = None
     
     db.session.commit()
+    
+    # Setelah commit, langsung cek apakah total data yang sudah dikerjakan sudah mencapai 1000
+    total_done = Annotation.query.filter(
+        Annotation.user_id == current_user.id, 
+        Annotation.acc_f.isnot(None)
+    ).count()
+    
+    if total_done >= 1000:
+        return redirect(url_for('transition_codemixed'))
+        
     return redirect(url_for('annotate_monolingual'))
-
+    
 @app.route('/transition/codemixed')
 @login_required
 def transition_codemixed():
