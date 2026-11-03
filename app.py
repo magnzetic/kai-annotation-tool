@@ -110,7 +110,6 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
-    # CARA CEPAT: Hanya ambil data anotasi yang benar-benar sudah dikerjakan oleh user ini
     annotations = Annotation.query.filter_by(user_id=current_user.id).all()
     
     reviews_with_status = []
@@ -139,9 +138,9 @@ def edit_monolingual(review_id):
         db.session.commit()
     
     if request.method == 'POST':
-        anno.acc_f = request.form.get('acc_f', type=int)
-        anno.cep_f = request.form.get('cep_f', type=int)
-        anno.rea_f = request.form.get('rea_f', type=int)
+        anno.acc_f = request.form.get('acc_full', type=int)
+        anno.cep_f = request.form.get('accept_full', type=int)
+        anno.rea_f = request.form.get('read_full', type=int)
         
         need_rev = request.form.get('need_rev_full')
         if need_rev == 'yes':
@@ -195,21 +194,19 @@ def annotate():
 @app.route('/annotate/monolingual')
 @login_required
 def annotate_monolingual():
-    # HITUNG TEGAS: Berapa data yang sudah terisi sempurna nilai acc_f-nya
     done_count = Annotation.query.filter(
         Annotation.user_id == current_user.id, 
         Annotation.acc_f.isnot(None)
     ).count()
     
-    # JIKA SUDAH 1000 ATAU LEBIH, JANGAN KASIH MASUK KE FORM LAGI, LANGSUNG LEMPAR!
+    # Mengarah ke transition_codemixed yang benar
     if done_count >= 1000:
-        return redirect(url_for('transition_mix'))
+        return redirect(url_for('transition_codemixed'))
     
-    # Ambil data berikutnya berdasarkan offset
     item = Review.query.order_by(Review.id.asc()).offset(done_count).first()
     
     if not item:
-        return redirect(url_for('transition_mix'))
+        return redirect(url_for('transition_codemixed'))
         
     user_role = current_user.role
     return render_template('annotate_mono.html', item=item, role=user_role)
@@ -224,9 +221,10 @@ def submit_monolingual(review_id):
         anno = Annotation(review_id=review_id, user_id=current_user.id)
         db.session.add(anno)
         
-    anno.acc_f = request.form.get('acc_f', type=int)
-    anno.cep_f = request.form.get('cep_f', type=int)
-    anno.rea_f = request.form.get('rea_f', type=int)
+    # Menangkap nama input dari form HTML
+    anno.acc_f = request.form.get('acc_full', type=int)
+    anno.cep_f = request.form.get('accept_full', type=int)
+    anno.rea_f = request.form.get('read_full', type=int)
     
     need_rev = request.form.get('need_rev_full')
     if need_rev == 'yes':
@@ -236,15 +234,14 @@ def submit_monolingual(review_id):
     
     db.session.commit()
     
-    # CEK TOTAL SETELAH COMMIT
     total_done = Annotation.query.filter(
         Annotation.user_id == current_user.id, 
         Annotation.acc_f.isnot(None)
     ).count()
     
-    # Kalau sudah 1000 atau lebih, pastikan lari ke transisi
+    # Mengarah ke transition_codemixed yang benar
     if total_done >= 1000:
-        return redirect(url_for('transition_mix'))
+        return redirect(url_for('transition_codemixed'))
         
     return redirect(url_for('annotate_monolingual'))
     
