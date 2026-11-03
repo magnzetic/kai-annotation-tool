@@ -203,13 +203,13 @@ def annotate_monolingual():
     
     # JIKA SUDAH 1000 ATAU LEBIH, JANGAN KASIH MASUK KE FORM LAGI, LANGSUNG LEMPAR!
     if done_count >= 1000:
-        return redirect(url_for('transition_codemixed'))
+        return redirect(url_for('transition_mix'))
     
     # Ambil data berikutnya berdasarkan offset
     item = Review.query.order_by(Review.id.asc()).offset(done_count).first()
     
     if not item:
-        return redirect(url_for('transition_codemixed'))
+        return redirect(url_for('transition_mix'))
         
     user_role = current_user.role
     return render_template('annotate_mono.html', item=item, role=user_role)
@@ -244,7 +244,7 @@ def submit_monolingual(review_id):
     
     # Kalau sudah 1000 atau lebih, pastikan lari ke transisi
     if total_done >= 1000:
-        return redirect(url_for('transition_codemixed'))
+        return redirect(url_for('transition_mix'))
         
     return redirect(url_for('annotate_monolingual'))
     
