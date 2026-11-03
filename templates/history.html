@@ -54,17 +54,28 @@
             </div>
         </div>
 
-        <!-- TOMBOL NAVIGASI HALAMAN (PAGINATION) -->
+        <!-- TOMBOL NAVIGASI HALAMAN (PAGINATION DENGAN JUMP SELECT) -->
         <nav class="mt-4">
-            <ul class="pagination justify-content-center">
+            <ul class="pagination justify-content-center align-items-center">
+                <!-- Tombol Sebelumnya -->
                 <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                     <a class="page-link" href="{{ url_for('history', page=pagination.prev_num) if pagination.has_prev else '#' }}">← Sebelumnya</a>
                 </li>
                 
-                <li class="page-item disabled">
-                    <span class="page-link text-dark fw-bold">Halaman {{ pagination.page }} dari {{ pagination.pages }}</span>
+                <!-- Dropdown Lompat Halaman Cepat -->
+                <li class="page-item disabled px-2">
+                    <span class="page-link border-0 bg-transparent text-dark fw-bold">
+                        Hal. 
+                        <select class="form-select form-select-sm d-inline-block w-auto mx-1" onchange="location.href=this.value">
+                            {% for p in range(1, pagination.pages + 1) %}
+                                <option value="{{ url_for('history', page=p) }}" {% if p == pagination.page %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                        dari {{ pagination.pages }}
+                    </span>
                 </li>
 
+                <!-- Tombol Berikutnya -->
                 <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                     <a class="page-link" href="{{ url_for('history', page=pagination.next_num) if pagination.has_next else '#' }}">Berikutnya →</a>
                 </li>
