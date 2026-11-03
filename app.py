@@ -278,11 +278,15 @@ def annotate_codemixed():
 def submit_codemixed(review_id):
     review = Review.query.get_or_404(review_id)
     
+    # CARI APAKAH ANOTASI UNTUK REVIEW INI SUDAH ADA (BARIS MONOLINGUAL SEBELUMNYA)
     anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
+    
     if not anno:
+        # Hanya buat baru kalau benar-benar belum ada sama sekali
         anno = Annotation(review_id=review_id, user_id=current_user.id)
         db.session.add(anno)
         
+    # UPDATE KOLOM CODE-MIXED PADA BARIS YANG SAMA
     anno.acc_m = request.form.get('acc_mix', type=int)
     anno.cep_m = request.form.get('accept_mix', type=int)
     anno.rea_m = request.form.get('read_mix', type=int)
