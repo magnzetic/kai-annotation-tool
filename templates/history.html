@@ -53,6 +53,24 @@
                 </table>
             </div>
         </div>
+
+        <!-- TOMBOL NAVIGASI HALAMAN (PAGINATION) -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('history', page=pagination.prev_num) if pagination.has_prev else '#' }}">← Sebelumnya</a>
+                </li>
+                
+                <li class="page-item disabled">
+                    <span class="page-link text-dark fw-bold">Halaman {{ pagination.page }} dari {{ pagination.pages }}</span>
+                </li>
+
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('history', page=pagination.next_num) if pagination.has_next else '#' }}">Berikutnya →</a>
+                </li>
+            </ul>
+        </nav>
+        
         {% else %}
         <div class="alert alert-info">Belum ada data review atau riwayat. <a href="{{ url_for('annotate') }}">Mulai Anotasi Sekarang</a></div>
         {% endif %}
