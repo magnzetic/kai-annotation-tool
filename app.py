@@ -235,12 +235,13 @@ def submit_monolingual(review_id):
     
     db.session.commit()
     
-    # Cek total data yang sudah selesai
+    # HITUNG ULANG TOTAL DATA MONOLINGUAL YANG SUDAH SELESAI
     total_done = Annotation.query.filter(
         Annotation.user_id == current_user.id, 
         Annotation.acc_f.isnot(None)
     ).count()
     
+    # JIKA SUDAH MENCAPAI ATAU LEBIH DARI 1000, LANGSUNG LEMPAR KE HALAMAN TRANSISI/SELESAI!
     if total_done >= 1000:
         return redirect(url_for('transition_codemixed'))
         
