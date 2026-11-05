@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash
 def setup():
     with app.app_context():
         db.create_all()
+
         
         # 1. Parsing data user secara dinamis dari environment variable
         users_env = os.getenv('USERS_CONFIG')
