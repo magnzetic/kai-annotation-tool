@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>Anotasi Monolingual - KAI Annotation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Textarea otomatis menyesuaikan isi teks */
+        textarea.auto-expand {
+            resize: none;
+            overflow: hidden;
+            min-height: 80px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container py-5">
@@ -60,9 +68,10 @@
                         </div>
                     </div>
 
+                    <!-- TEXTAREA AUTO EXPAND -->
                     <div id="container_rev_full" class="mb-4 d-none">
                         <label class="form-label fw-bold text-danger">✍️ Masukkan Teks Revisi: <span class="text-danger">*</span></label>
-                        <textarea id="rev_full" name="rev_full" class="form-control" rows="2" placeholder="Ketik perbaikan teks di sini..."></textarea>
+                        <textarea id="rev_full" name="rev_full" class="form-control auto-expand" placeholder="Ketik perbaikan teks di sini..."></textarea>
                     </div>
 
                     <hr>
@@ -98,7 +107,17 @@
     </div>
 
     <script>
-        // Script sederhana hanya untuk toggle textarea revisi
+        // Auto-expand textarea function
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+        }
+
+        const revFullTextarea = document.getElementById('rev_full');
+        revFullTextarea.addEventListener('input', function() {
+            autoResize(this);
+        });
+
         document.querySelectorAll('.need-rev-full').forEach(radio => {
             radio.addEventListener('change', function() {
                 let container = document.getElementById('container_rev_full');
@@ -106,6 +125,7 @@
                 if (this.value === 'yes') {
                     container.classList.remove('d-none');
                     textarea.required = true;
+                    autoResize(textarea);
                 } else {
                     container.classList.add('d-none');
                     textarea.required = false;
