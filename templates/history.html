@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <!-- TOMBOL NAVIGASI HALAMAN (PAGINATION DENGAN JUMP SELECT) -->
+        <!-- TOMBOL NAVIGASI HALAMAN (DROPDOWN BISA DIPENCET & URUT) -->
         <nav class="mt-4">
             <ul class="pagination justify-content-center align-items-center">
                 <!-- Tombol Sebelumnya -->
@@ -62,11 +62,11 @@
                     <a class="page-link" href="{{ url_for('history', page=pagination.prev_num) if pagination.has_prev else '#' }}">← Sebelumnya</a>
                 </li>
                 
-                <!-- Dropdown Lompat Halaman Cepat -->
-                <li class="page-item disabled px-2">
+                <!-- Dropdown Lompat Halaman (Tanpa class disabled biar bisa diklik) -->
+                <li class="page-item px-2">
                     <span class="page-link border-0 bg-transparent text-dark fw-bold">
                         Hal. 
-                        <select class="form-select form-select-sm d-inline-block w-auto mx-1" onchange="location.href=this.value">
+                        <select class="form-select form-select-sm d-inline-block w-auto mx-1 shadow-sm" onchange="location.href=this.value">
                             {% for p in range(1, pagination.pages + 1) %}
                                 <option value="{{ url_for('history', page=p) }}" {% if p == pagination.page %}selected{% endif %}>{{ p }}</option>
                             {% endfor %}
