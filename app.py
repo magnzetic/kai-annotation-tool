@@ -111,9 +111,11 @@ def dashboard():
 @login_required
 def history():
     page = request.args.get('page', 1, type=int)
-    pagination = Annotation.query.filter_by(user_id=current_user.id).paginate(page=page, per_page=50, error_out=False)
+    
+    # Tambahkan order_by(Annotation.review_id.asc()) biar urut dari #1, #2, #3, dst.
+    pagination = Annotation.query.filter_by(user_id=current_user.id).order_by(Annotation.review_id.asc()).paginate(page=page, per_page=50, error_out=False)
     annotations = pagination.items
-
+    
     reviews_with_status = []
     for anno in annotations:
         rev = Review.query.get(anno.review_id)
@@ -122,7 +124,7 @@ def history():
                 'review': rev,
                 'anno': anno
             })
-
+            
     return render_template('history.html', reviews_with_status=reviews_with_status, pagination=pagination)
     
 @app.route('/edit/monolingual/<int:review_id>', methods=['GET', 'POST'])
