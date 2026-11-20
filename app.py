@@ -55,7 +55,7 @@ class Annotation(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Fase 1: Monolingual (Tanpa word_tags_mono)
+    # Fase 1: Monolingual
     acc_f = db.Column(db.Integer)
     cep_f = db.Column(db.Integer)
     rea_f = db.Column(db.Integer)
@@ -69,6 +69,35 @@ class Annotation(db.Model):
     word_tags_mix = db.Column(db.Text)
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+# --- HELPER PEMBAGIAN DATA JAWA ---
+def get_jawa_allowed_ids(user_id):
+    """
+    Overlap: 1..300
+    User ID 3: 1..300 (overlap) + 301..741 (unik) -> 1..741
+    User ID 1: 1..300 (overlap) + 742..1000 (unik)
+    """
+    if user_id == 3:
+        return list(range(1, 742))
+    elif user_id == 1:
+        return list(range(1, 301)) + list(range(742, 1001))
+    else:
+        return list(range(1, 1001))
+
+def get_user_target_count(user):
+    if user.role == 'jawa':
+        return len(get_jawa_allowed_ids(user.id))
+    return 1000
+
+def get_jawa_done_ids(user_id, phase='mono'):
+    allowed_ids = get_jawa_allowed_ids(user_id)
+    col = Annotation.acc_f.isnot(None) if phase == 'mono' else Annotation.acc_m.isnot(None)
+    rows = db.session.query(Annotation.review_id).filter(
+        Annotation.user_id == user_id,
+        Annotation.review_id.in_(allowed_ids),
+        col
+    ).all()
+    return [r[0] for r in rows]
 
 # --- ROUTES ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -94,11 +123,18 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    total_mono = 1000
-    done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-    
-    total_mix = 1000
-    done_mix = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).count()
+    if current_user.role == 'jawa':
+        total_mono = get_user_target_count(current_user)
+        done_mono = len(get_jawa_done_ids(current_user.id, phase='mono'))
+        
+        total_mix = get_user_target_count(current_user)
+        done_mix = len(get_jawa_done_ids(current_user.id, phase='mix'))
+    else:
+        total_mono = 1000
+        done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+        
+        total_mix = 1000
+        done_mix = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).count()
     
     percent_mono = round((done_mono / total_mono) * 100, 1) if total_mono > 0 else 0
     percent_mix = round((done_mix / total_mix) * 100, 1) if total_mix > 0 else 0
@@ -112,8 +148,11 @@ def dashboard():
 def history():
     page = request.args.get('page', 1, type=int)
     
-    # Tambahkan order_by(Annotation.review_id.asc()) biar urut dari #1, #2, #3, dst.
-    pagination = Annotation.query.filter_by(user_id=current_user.id).order_by(Annotation.review_id.asc()).paginate(page=page, per_page=50, error_out=False)
+    query = Annotation.query.filter_by(user_id=current_user.id)
+    if current_user.role == 'jawa':
+        query = query.filter(Annotation.review_id.in_(get_jawa_allowed_ids(current_user.id)))
+        
+    pagination = query.order_by(Annotation.review_id.asc()).paginate(page=page, per_page=50, error_out=False)
     annotations = pagination.items
     
     reviews_with_status = []
@@ -189,8 +228,14 @@ def edit_codemixed(review_id):
 @app.route('/annotate')
 @login_required
 def annotate():
-    done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-    if done_mono < 1000:
+    if current_user.role == 'jawa':
+        target = get_user_target_count(current_user)
+        done_mono = len(get_jawa_done_ids(current_user.id, phase='mono'))
+    else:
+        target = 1000
+        done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+        
+    if done_mono < target:
         return redirect(url_for('annotate_monolingual'))
     else:
         return redirect(url_for('annotate_codemixed'))
@@ -198,19 +243,34 @@ def annotate():
 @app.route('/annotate/monolingual')
 @login_required
 def annotate_monolingual():
-    done_count = Annotation.query.filter(
-        Annotation.user_id == current_user.id, 
-        Annotation.acc_f.isnot(None)
-    ).count()
-    
-    # Mengarah ke transition_codemixed yang benar
-    if done_count >= 1000:
-        return redirect(url_for('transition_codemixed'))
-    
-    item = Review.query.order_by(Review.id.asc()).offset(done_count).first()
-    
-    if not item:
-        return redirect(url_for('transition_codemixed'))
+    if current_user.role == 'jawa':
+        allowed_ids = get_jawa_allowed_ids(current_user.id)
+        done_ids = get_jawa_done_ids(current_user.id, phase='mono')
+        target = len(allowed_ids)
+        
+        if len(done_ids) >= target:
+            return redirect(url_for('transition_codemixed'))
+            
+        item = Review.query.filter(
+            Review.id.in_(allowed_ids),
+            ~Review.id.in_(done_ids)
+        ).order_by(Review.id.asc()).first()
+        
+        if not item:
+            return redirect(url_for('transition_codemixed'))
+    else:
+        done_ids = db.session.query(Annotation.review_id).filter(
+            Annotation.user_id == current_user.id,
+            Annotation.acc_f.isnot(None)
+        ).all()
+        done_ids = [r[0] for r in done_ids]
+        
+        if len(done_ids) >= 1000:
+            return redirect(url_for('transition_codemixed'))
+            
+        item = Review.query.filter(~Review.id.in_(done_ids)).order_by(Review.id.asc()).first()
+        if not item:
+            return redirect(url_for('transition_codemixed'))
         
     user_role = current_user.role
     return render_template('annotate_mono.html', item=item, role=user_role)
@@ -225,7 +285,6 @@ def submit_monolingual(review_id):
         anno = Annotation(review_id=review_id, user_id=current_user.id)
         db.session.add(anno)
         
-    # Menangkap nama input dari form HTML
     anno.acc_f = request.form.get('acc_full', type=int)
     anno.cep_f = request.form.get('accept_full', type=int)
     anno.rea_f = request.form.get('read_full', type=int)
@@ -238,13 +297,17 @@ def submit_monolingual(review_id):
     
     db.session.commit()
     
-    total_done = Annotation.query.filter(
-        Annotation.user_id == current_user.id, 
-        Annotation.acc_f.isnot(None)
-    ).count()
+    if current_user.role == 'jawa':
+        target = get_user_target_count(current_user)
+        total_done = len(get_jawa_done_ids(current_user.id, phase='mono'))
+    else:
+        target = 1000
+        total_done = Annotation.query.filter(
+            Annotation.user_id == current_user.id, 
+            Annotation.acc_f.isnot(None)
+        ).count()
     
-    # Mengarah ke transition_codemixed yang benar
-    if total_done >= 1000:
+    if total_done >= target:
         return redirect(url_for('transition_codemixed'))
         
     return redirect(url_for('annotate_monolingual'))
@@ -257,18 +320,41 @@ def transition_codemixed():
 @app.route('/annotate/codemixed')
 @login_required
 def annotate_codemixed():
-    done_mono_count = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-    if done_mono_count < 1000:
-        flash('⚠️ Anda harus menyelesaikan 1000 data Monolingual terlebih dahulu!', 'warning')
-        return redirect(url_for('annotate_monolingual'))
+    if current_user.role == 'jawa':
+        allowed_ids = get_jawa_allowed_ids(current_user.id)
+        done_mono_count = len(get_jawa_done_ids(current_user.id, phase='mono'))
+        target = len(allowed_ids)
+        
+        if done_mono_count < target:
+            flash(f'⚠️ Anda harus menyelesaikan {target} data Monolingual jatah Anda terlebih dahulu!', 'warning')
+            return redirect(url_for('annotate_monolingual'))
 
-    done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
-    done_mix_ids = [r[0] for r in done_mix_ids]
-    
-    item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
-    
-    if not item or Review.query.filter(Review.id.in_(done_mix_ids)).count() >= 1000:
-        return render_template('finish.html')
+        done_mix_ids = get_jawa_done_ids(current_user.id, phase='mix')
+        if len(done_mix_ids) >= target:
+            return render_template('finish.html')
+            
+        item = Review.query.filter(
+            Review.id.in_(allowed_ids),
+            ~Review.id.in_(done_mix_ids)
+        ).order_by(Review.id.asc()).first()
+        
+        if not item:
+            return render_template('finish.html')
+    else:
+        done_mono_count = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
+        if done_mono_count < 1000:
+            flash('⚠️ Anda harus menyelesaikan 1000 data Monolingual terlebih dahulu!', 'warning')
+            return redirect(url_for('annotate_monolingual'))
+
+        done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
+        done_mix_ids = [r[0] for r in done_mix_ids]
+        
+        if len(done_mix_ids) >= 1000:
+            return render_template('finish.html')
+            
+        item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
+        if not item:
+            return render_template('finish.html')
         
     user_role = current_user.role
     return render_template('annotate_mix.html', item=item, role=user_role)
@@ -278,15 +364,11 @@ def annotate_codemixed():
 def submit_codemixed(review_id):
     review = Review.query.get_or_404(review_id)
     
-    # CARI APAKAH ANOTASI UNTUK REVIEW INI SUDAH ADA (BARIS MONOLINGUAL SEBELUMNYA)
     anno = Annotation.query.filter_by(review_id=review_id, user_id=current_user.id).first()
-    
     if not anno:
-        # Hanya buat baru kalau benar-benar belum ada sama sekali
         anno = Annotation(review_id=review_id, user_id=current_user.id)
         db.session.add(anno)
         
-    # UPDATE KOLOM CODE-MIXED PADA BARIS YANG SAMA
     anno.acc_m = request.form.get('acc_mix', type=int)
     anno.cep_m = request.form.get('accept_mix', type=int)
     anno.rea_m = request.form.get('read_mix', type=int)
