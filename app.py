@@ -70,57 +70,70 @@ class Annotation(db.Model):
     
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-# --- HELPER PEMBAGIAN DATA JAWA ---
-def get_jawa_allowed_ids(user_id, phase='mono'):
+# --- HELPER PEMBAGIAN DATA ---
+def get_allowed_ids(user, phase='mono'):
     """
-    Monolingual:
-      - Overlap: 1..397
-      - User ID 3: 1..699 (1..397 overlap + 398..699 unik = 302 data)
-      - User ID 1: (1..397 overlap) + (700..1000 unik = 301 data)
+    Jawa (user_id 3 & 1):
+      - Mono:
+          overlap 1..397
+          user_id 3 -> 1..699 (1..397 overlap + 398..699 unik)
+          user_id 1 -> (1..397 overlap) + (700..1000 unik)
+      - Mix:
+          overlap 1..300
+          user_id 3 -> 1..650 (1..300 overlap + 301..650 unik)
+          user_id 1 -> (1..300 overlap) + (651..1000 unik)
 
-    Code-Mixed:
-      - Overlap: 1..300
-      - User ID 3: 1..650 (1..300 overlap + 301..650 unik)
-      - User ID 1: 1..300 (overlap) + 651..1000 (unik)
+    Palembang (user_id 2 & 4):
+      - Mono:
+          1..500 sudah selesai berdua
+          user_id 2 -> 1..750 (1..500 + 501..750 unik)
+          user_id 4 -> (1..500) + (751..1000 unik)
+      - Mix:
+          overlap 1..300
+          user_id 2 -> 1..650 (1..300 overlap + 301..650 unik)
+          user_id 4 -> (1..300 overlap) + (651..1000 unik)
     """
-    if phase == 'mono':
-        if user_id == 3:
-            return list(range(1, 700))
-        elif user_id == 1:
-            return list(range(1, 398)) + list(range(700, 1001))
-        return list(range(1, 1001))
-    else:
-        if user_id == 3:
-            return list(range(1, 651))
-        elif user_id == 1:
-            return list(range(1, 301)) + list(range(651, 1001))
-        return list(range(1, 1001))
+    if user.role == 'jawa':
+        if phase == 'mono':
+            if user.id == 3:
+                return list(range(1, 700))
+            elif user.id == 1:
+                return list(range(1, 398)) + list(range(700, 1001))
+        else:
+            if user.id == 3:
+                return list(range(1, 651))
+            elif user.id == 1:
+                return list(range(1, 301)) + list(range(651, 1001))
+    elif user.role == 'palembang':
+        if phase == 'mono':
+            if user.id == 2:
+                return list(range(1, 751))
+            elif user.id == 4:
+                return list(range(1, 501)) + list(range(751, 1001))
+        else:
+            if user.id == 2:
+                return list(range(1, 651))
+            elif user.id == 4:
+                return list(range(1, 301)) + list(range(651, 1001))
+    return list(range(1, 1001))
 
 def get_user_target_count(user, phase='mono'):
-    if user.role == 'jawa':
-        return len(get_jawa_allowed_ids(user.id, phase=phase))
-    return 1000
+    return len(get_allowed_ids(user, phase=phase))
 
-def get_jawa_done_ids(user_id, phase='mono'):
-    allowed_ids = get_jawa_allowed_ids(user_id, phase=phase)
+def get_done_ids(user, phase='mono'):
+    allowed_ids = get_allowed_ids(user, phase=phase)
     col = Annotation.acc_f.isnot(None) if phase == 'mono' else Annotation.acc_m.isnot(None)
     rows = db.session.query(Annotation.review_id).filter(
-        Annotation.user_id == user_id,
+        Annotation.user_id == user.id,
         Annotation.review_id.in_(allowed_ids),
         col
     ).all()
     return [r[0] for r in rows]
 
 def is_mono_completed(user):
-    if user.role == 'jawa':
-        target_mono = get_user_target_count(user, phase='mono')
-        done_mono = len(get_jawa_done_ids(user.id, phase='mono'))
-        return done_mono >= target_mono
-    done_mono = Annotation.query.filter(
-        Annotation.user_id == user.id,
-        Annotation.acc_f.isnot(None)
-    ).count()
-    return done_mono >= 1000
+    target_mono = get_user_target_count(user, phase='mono')
+    done_mono = len(get_done_ids(user, phase='mono'))
+    return done_mono >= target_mono
 
 # --- ROUTES ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -146,18 +159,11 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    if current_user.role == 'jawa':
-        total_mono = get_user_target_count(current_user, phase='mono')
-        done_mono = len(get_jawa_done_ids(current_user.id, phase='mono'))
-        
-        total_mix = get_user_target_count(current_user, phase='mix')
-        done_mix = len(get_jawa_done_ids(current_user.id, phase='mix'))
-    else:
-        total_mono = 1000
-        done_mono = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_f.isnot(None)).count()
-        
-        total_mix = 1000
-        done_mix = Annotation.query.filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).count()
+    total_mono = get_user_target_count(current_user, phase='mono')
+    done_mono = len(get_done_ids(current_user, phase='mono'))
+    
+    total_mix = get_user_target_count(current_user, phase='mix')
+    done_mix = len(get_done_ids(current_user, phase='mix'))
     
     mono_done = done_mono >= total_mono
     percent_mono = round((done_mono / total_mono) * 100, 1) if total_mono > 0 else 0
@@ -174,12 +180,11 @@ def history():
     page = request.args.get('page', 1, type=int)
     
     query = Annotation.query.filter_by(user_id=current_user.id)
-    if current_user.role == 'jawa':
-        allowed_union = list(set(
-            get_jawa_allowed_ids(current_user.id, phase='mono') +
-            get_jawa_allowed_ids(current_user.id, phase='mix')
-        ))
-        query = query.filter(Annotation.review_id.in_(allowed_union))
+    allowed_union = list(set(
+        get_allowed_ids(current_user, phase='mono') +
+        get_allowed_ids(current_user, phase='mix')
+    ))
+    query = query.filter(Annotation.review_id.in_(allowed_union))
         
     pagination = query.order_by(Annotation.review_id.asc()).paginate(page=page, per_page=50, error_out=False)
     annotations = pagination.items
@@ -268,34 +273,20 @@ def annotate():
 @app.route('/annotate/monolingual')
 @login_required
 def annotate_monolingual():
-    if current_user.role == 'jawa':
-        allowed_ids = get_jawa_allowed_ids(current_user.id, phase='mono')
-        done_ids = get_jawa_done_ids(current_user.id, phase='mono')
-        target = len(allowed_ids)
+    allowed_ids = get_allowed_ids(current_user, phase='mono')
+    done_ids = get_done_ids(current_user, phase='mono')
+    target = len(allowed_ids)
+    
+    if len(done_ids) >= target:
+        return redirect(url_for('transition_codemixed'))
         
-        if len(done_ids) >= target:
-            return redirect(url_for('transition_codemixed'))
-            
-        item = Review.query.filter(
-            Review.id.in_(allowed_ids),
-            ~Review.id.in_(done_ids)
-        ).order_by(Review.id.asc()).first()
-        
-        if not item:
-            return redirect(url_for('transition_codemixed'))
-    else:
-        done_ids = db.session.query(Annotation.review_id).filter(
-            Annotation.user_id == current_user.id,
-            Annotation.acc_f.isnot(None)
-        ).all()
-        done_ids = [r[0] for r in done_ids]
-        
-        if len(done_ids) >= 1000:
-            return redirect(url_for('transition_codemixed'))
-            
-        item = Review.query.filter(~Review.id.in_(done_ids)).order_by(Review.id.asc()).first()
-        if not item:
-            return redirect(url_for('transition_codemixed'))
+    item = Review.query.filter(
+        Review.id.in_(allowed_ids),
+        ~Review.id.in_(done_ids)
+    ).order_by(Review.id.asc()).first()
+    
+    if not item:
+        return redirect(url_for('transition_codemixed'))
         
     user_role = current_user.role
     return render_template('annotate_mono.html', item=item, role=user_role)
@@ -343,31 +334,20 @@ def annotate_codemixed():
         flash(f'⚠️ Anda harus menyelesaikan seluruh ({target}) data Monolingual terlebih dahulu sebelum membuka Code-Mixed!', 'warning')
         return redirect(url_for('annotate_monolingual'))
 
-    if current_user.role == 'jawa':
-        allowed_ids = get_jawa_allowed_ids(current_user.id, phase='mix')
-        done_mix_ids = get_jawa_done_ids(current_user.id, phase='mix')
-        target = len(allowed_ids)
+    allowed_ids = get_allowed_ids(current_user, phase='mix')
+    done_mix_ids = get_done_ids(current_user, phase='mix')
+    target = len(allowed_ids)
 
-        if len(done_mix_ids) >= target:
-            return render_template('finish.html')
-            
-        item = Review.query.filter(
-            Review.id.in_(allowed_ids),
-            ~Review.id.in_(done_mix_ids)
-        ).order_by(Review.id.asc()).first()
+    if len(done_mix_ids) >= target:
+        return render_template('finish.html')
         
-        if not item:
-            return render_template('finish.html')
-    else:
-        done_mix_ids = db.session.query(Annotation.review_id).filter(Annotation.user_id == current_user.id, Annotation.acc_m.isnot(None)).all()
-        done_mix_ids = [r[0] for r in done_mix_ids]
-        
-        if len(done_mix_ids) >= 1000:
-            return render_template('finish.html')
-            
-        item = Review.query.filter(~Review.id.in_(done_mix_ids)).order_by(Review.id.asc()).first()
-        if not item:
-            return render_template('finish.html')
+    item = Review.query.filter(
+        Review.id.in_(allowed_ids),
+        ~Review.id.in_(done_mix_ids)
+    ).order_by(Review.id.asc()).first()
+    
+    if not item:
+        return render_template('finish.html')
         
     user_role = current_user.role
     return render_template('annotate_mix.html', item=item, role=user_role)
