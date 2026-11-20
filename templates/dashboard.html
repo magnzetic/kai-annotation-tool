@@ -28,12 +28,23 @@
 
         {% if current_user.role == 'jawa' %}
         <div class="alert alert-info shadow-sm mb-4">
-            <strong>📌 Skema Pembagian Jawa:</strong> Overlap data <strong>#1 – #300</strong>.
-            {% if current_user.id == 3 %}
-                Jatah unik Anda: <strong>#301 – #741</strong> (Total jatah: <strong>{{ total_mono }}</strong> data).
-            {% elif current_user.id == 1 %}
-                Jatah unik Anda: <strong>#742 – #1000</strong> (Total jatah: <strong>{{ total_mono }}</strong> data).
-            {% endif %}
+            <div class="fw-bold mb-1">📌 Pembagian Dataset Jawa:</div>
+            <div>
+                <strong>Monolingual:</strong> Overlap <strong>#1 – #390</strong>
+                {% if current_user.id == 3 %}
+                    | Jatah Anda: <strong>#1 – #694</strong> (unik <strong>#391 – #694</strong>, total <strong>{{ total_mono }}</strong> data)
+                {% elif current_user.id == 1 %}
+                    | Jatah Anda: <strong>#1 – #390</strong> & <strong>#695 – #1000</strong> (total <strong>{{ total_mono }}</strong> data)
+                {% endif %}
+            </div>
+            <div>
+                <strong>Code-Mixed:</strong> Overlap <strong>#1 – #300</strong>
+                {% if current_user.id == 3 %}
+                    | Jatah Anda: <strong>#1 – #650</strong> (unik <strong>#301 – #650</strong>, total <strong>{{ total_mix }}</strong> data)
+                {% elif current_user.id == 1 %}
+                    | Jatah Anda: <strong>#1 – #300</strong> & <strong>#651 – #1000</strong> (total <strong>{{ total_mix }}</strong> data)
+                {% endif %}
+            </div>
         </div>
         {% endif %}
 
@@ -49,7 +60,7 @@
                             <div class="progress-bar bg-primary" role="progressbar" style="width: {{ percent_mono }}%;">{{ percent_mono }}%</div>
                         </div>
                         <a href="{{ url_for('annotate_monolingual') }}" class="btn btn-primary w-100 fw-bold">
-                            {% if done_mono < total_mono %}Lanjut Anotasi Monolingual →{% else %}Monolingual Selesai ✓{% endif %}
+                            {% if not mono_done %}Lanjut Anotasi Monolingual →{% else %}Monolingual Selesai ✓{% endif %}
                         </a>
                     </div>
                 </div>
@@ -65,9 +76,15 @@
                         <div class="progress mb-3" style="height: 20px;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent_mix }}%;">{{ percent_mix }}%</div>
                         </div>
-                        <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success w-100 fw-bold">
-                            {% if done_mix < total_mix %}Lanjut Anotasi Code-Mixed →{% else %}Code-Mixed Selesai ✓{% endif %}
-                        </a>
+                        {% if mono_done %}
+                            <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success w-100 fw-bold">
+                                {% if done_mix < total_mix %}Lanjut Anotasi Code-Mixed →{% else %}Code-Mixed Selesai ✓{% endif %}
+                            </a>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary w-100 fw-bold" disabled>
+                                🔒 Terkunci (Selesaikan Monolingual Dulu)
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
