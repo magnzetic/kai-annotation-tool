@@ -74,9 +74,9 @@ class Annotation(db.Model):
 def get_jawa_allowed_ids(user_id, phase='mono'):
     """
     Monolingual:
-      - Overlap: 1..390
-      - User ID 3: 1..694 (1..390 overlap + 391..694 unik)
-      - User ID 1: 1..390 (overlap) + 695..1000 (unik)
+      - Overlap: 1..397
+      - User ID 3: 1..699 (1..397 overlap + 398..699 unik = 302 data)
+      - User ID 1: (1..397 overlap) + (700..1000 unik = 301 data)
 
     Code-Mixed:
       - Overlap: 1..300
@@ -85,9 +85,9 @@ def get_jawa_allowed_ids(user_id, phase='mono'):
     """
     if phase == 'mono':
         if user_id == 3:
-            return list(range(1, 695))
+            return list(range(1, 700))
         elif user_id == 1:
-            return list(range(1, 391)) + list(range(695, 1001))
+            return list(range(1, 398)) + list(range(700, 1001))
         return list(range(1, 1001))
     else:
         if user_id == 3:
