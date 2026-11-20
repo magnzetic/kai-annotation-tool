@@ -9,69 +9,68 @@
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h4>Selamat Datang, {{ current_user.username }}</h4>
-                <small class="text-muted">Bahasa Target: {{ current_user.role | capitalize }}</small>
+                <h2 class="mb-0">Dashboard Anotasi KAI</h2>
+                <small class="text-muted">Login sebagai: <strong>{{ current_user.username }}</strong> (Role: <strong>{{ current_user.role | capitalize }}</strong>)</small>
             </div>
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Keluar</a>
+            <div>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-dark btn-sm me-2">📋 Riwayat & Edit</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
         </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if current_user.role == 'jawa' %}
+        <div class="alert alert-info shadow-sm mb-4">
+            <strong>📌 Skema Pembagian Jawa:</strong> Overlap data <strong>#1 – #300</strong>.
+            {% if current_user.id == 3 %}
+                Jatah unik Anda: <strong>#301 – #741</strong> (Total jatah: <strong>{{ total_mono }}</strong> data).
+            {% elif current_user.id == 1 %}
+                Jatah unik Anda: <strong>#742 – #1000</strong> (Total jatah: <strong>{{ total_mono }}</strong> data).
+            {% endif %}
+        </div>
+        {% endif %}
 
         <div class="row g-4 mb-4">
-            <!-- Card Fase 1: Monolingual (Selalu Aktif) -->
+            <!-- Fase 1: Monolingual -->
             <div class="col-md-6">
-                <div class="card shadow-sm border-primary h-100">
+                <div class="card shadow-sm h-100 border-primary">
                     <div class="card-body">
-                        <h5 class="card-title text-primary">Fase 1: Monolingual</h5>
-                        <p class="text-muted small">Penilaian teks bahasa daerah penuh.</p>
-                        <hr>
-                        <p class="mb-1"><strong>Total Data:</strong> {{ total_mono }}</p>
-                        <p class="mb-1"><strong>Selesai:</strong> {{ done_mono }}</p>
-                        <p class="mb-3"><strong>Progress:</strong> {{ percent_mono }}%</p>
-                        <div class="progress mb-3" style="height: 10px;">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ percent_mono }}%;"></div>
+                        <span class="badge bg-primary mb-2">Fase 1</span>
+                        <h5 class="card-title fw-bold">Monolingual ({{ current_user.role | capitalize }})</h5>
+                        <p class="text-muted small">Progress: <strong>{{ done_mono }}</strong> / {{ total_mono }} data ({{ percent_mono }}%)</p>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ percent_mono }}%;">{{ percent_mono }}%</div>
                         </div>
-                        <a href="{{ url_for('annotate_monolingual') }}" class="btn btn-primary w-100">Lanjutkan Sesi Monolingual</a>
+                        <a href="{{ url_for('annotate_monolingual') }}" class="btn btn-primary w-100 fw-bold">
+                            {% if done_mono < total_mono %}Lanjut Anotasi Monolingual →{% else %}Monolingual Selesai ✓{% endif %}
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Card Fase 2: Code-Mixed (Abu-abu / Terkunci jika Monolingual belum 1000) -->
+            <!-- Fase 2: Code-Mixed -->
             <div class="col-md-6">
-                {% if done_mono < 1000 %}
-                <div class="card shadow-sm border-secondary bg-light h-100 opacity-75">
+                <div class="card shadow-sm h-100 border-success">
                     <div class="card-body">
-                        <h5 class="card-title text-secondary">🔒 Fase 2: Code-Mixed (Terkunci)</h5>
-                        <p class="text-muted small">Selesaikan Fase 1 (Monolingual) hingga 1000 data terlebih dahulu untuk membuka sesi ini.</p>
-                        <hr>
-                        <p class="mb-1 text-muted"><strong>Total Data:</strong> {{ total_mix }}</p>
-                        <p class="mb-1 text-muted"><strong>Selesai:</strong> {{ done_mix }}</p>
-                        <p class="mb-3 text-muted"><strong>Progress:</strong> {{ percent_mix }}%</p>
-                        <div class="progress mb-3" style="height: 10px;">
-                            <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ percent_mix }}%;"></div>
+                        <span class="badge bg-success mb-2">Fase 2</span>
+                        <h5 class="card-title fw-bold">Code-Mixed (Indo-{{ current_user.role | capitalize }})</h5>
+                        <p class="text-muted small">Progress: <strong>{{ done_mix }}</strong> / {{ total_mix }} data ({{ percent_mix }}%)</p>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent_mix }}%;">{{ percent_mix }}%</div>
                         </div>
-                        <button class="btn btn-secondary w-100" disabled>Terkunci (Selesaikan Monolingual)</button>
+                        <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success w-100 fw-bold">
+                            {% if done_mix < total_mix %}Lanjut Anotasi Code-Mixed →{% else %}Code-Mixed Selesai ✓{% endif %}
+                        </a>
                     </div>
                 </div>
-                {% else %}
-                <div class="card shadow-sm border-success h-100">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">Fase 2: Code-Mixed</h5>
-                        <p class="text-muted small">Penilaian teks campuran & Word-Level Tagging.</p>
-                        <hr>
-                        <p class="mb-1"><strong>Total Data:</strong> {{ total_mix }}</p>
-                        <p class="mb-1"><strong>Selesai:</strong> {{ done_mix }}</p>
-                        <p class="mb-3"><strong>Progress:</strong> {{ percent_mix }}%</p>
-                        <div class="progress mb-3" style="height: 10px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent_mix }}%;"></div>
-                        </div>
-                        <a href="{{ url_for('annotate_codemixed') }}" class="btn btn-success w-100">Lanjutkan Sesi Code-Mixed</a>
-                    </div>
-                </div>
-                {% endif %}
             </div>
-        </div>
-
-        <div class="text-center">
-            <a href="{{ url_for('history') }}" class="btn btn-outline-secondary">📋 Lihat Riwayat & Edit Anotasi</a>
         </div>
     </div>
 </body>
