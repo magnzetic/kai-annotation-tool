@@ -26,28 +26,6 @@
             {% endif %}
         {% endwith %}
 
-        {% if current_user.role == 'jawa' %}
-        <div class="alert alert-info shadow-sm mb-4">
-            <div class="fw-bold mb-1">📌 Pembagian Dataset Jawa:</div>
-            <div>
-                <strong>Monolingual:</strong> Overlap <strong>#1 – #397</strong>
-                {% if current_user.id == 3 %}
-                    | Jatah Anda: <strong>#1 – #699</strong> (unik <strong>#398 – #699</strong>, total <strong>{{ total_mono }}</strong> data)
-                {% elif current_user.id == 1 %}
-                    | Jatah Anda: <strong>#1 – #397</strong> & <strong>#700 – #1000</strong> (total <strong>{{ total_mono }}</strong> data)
-                {% endif %}
-            </div>
-            <div>
-                <strong>Code-Mixed:</strong> Overlap <strong>#1 – #300</strong>
-                {% if current_user.id == 3 %}
-                    | Jatah Anda: <strong>#1 – #650</strong> (unik <strong>#301 – #650</strong>, total <strong>{{ total_mix }}</strong> data)
-                {% elif current_user.id == 1 %}
-                    | Jatah Anda: <strong>#1 – #300</strong> & <strong>#651 – #1000</strong> (total <strong>{{ total_mix }}</strong> data)
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
         <div class="row g-4 mb-4">
             <!-- Fase 1: Monolingual -->
             <div class="col-md-6">
